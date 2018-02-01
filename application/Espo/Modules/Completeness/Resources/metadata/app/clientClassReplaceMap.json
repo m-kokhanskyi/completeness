@@ -1,0 +1,10 @@
+{
+    "views/fields/base": [
+        "__APPEND__",
+        "completeness"
+    ],
+    "views/record/panels/default-side": [
+        "__APPEND__",
+        "completeness"
+    ]
+}

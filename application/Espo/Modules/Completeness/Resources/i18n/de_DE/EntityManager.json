@@ -1,0 +1,11 @@
+{
+  "labels": {
+    "Complete": "Ausfüllen"
+  },
+  "fields": {
+    "hasCompleteness": "Ausfüllen"
+  },
+  "tooltips": {
+    "hasCompleteness": "Prozent von ausgefüllten Feldern"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "hasCompleteness": {
+    "type": "bool",
+    "default": false
+  }
+}

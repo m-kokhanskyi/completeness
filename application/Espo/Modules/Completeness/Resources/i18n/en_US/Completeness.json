@@ -1,0 +1,5 @@
+{
+    "exceptions": {
+        "activationFailed": "Activation failed. Please, fill all required fields first."
+    }
+}

@@ -1,0 +1,11 @@
+{
+  "labels": {
+    "Complete": "Complete"
+  },
+  "fields": {
+    "hasCompleteness": "Complete"
+  },
+  "tooltips": {
+    "hasCompleteness": "The percentage of completed required fields"
+  }
+}

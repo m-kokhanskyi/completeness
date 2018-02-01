@@ -1,0 +1,8 @@
+{
+    "moduleNames": {
+        "Completeness": "Completeness"
+    },
+    "moduleDescriptions": {
+        "Completeness": "The module enables to check the level of filling of entity with the requireds fields. If this level is less then 100%, such an entity is impossible to activate."
+    }
+}

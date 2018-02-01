@@ -1,0 +1,8 @@
+{
+    "moduleNames": {
+        "Completeness": "Vollständigkeit"
+    },
+    "moduleDescriptions": {
+        "Completeness": "Das Modul ermöglicht die Entity-Prüfung nach den ausgefüllten Pflichtfeldern. Ist die Vollständigkeit niedriger als 100%, lässt sich der Entity nicht aktivieren."
+    }
+}
