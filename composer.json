@@ -1,0 +1,14 @@
+{
+    "name": "treo-crm/completeness",
+    "description": "Completeness module for TreoPIM",
+    "authors": [
+        {
+            "name": "Roman Ratsun",
+            "email": "r.ratsun@zinitsolutions.com"
+        }
+    ],
+    "require": {
+        "php": "^7.0",
+        "composer/composer": "^1.4"
+    }
+}
