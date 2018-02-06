@@ -37,7 +37,8 @@ class Metadata extends AbstractMetadata
                 // add complete
                 if (!isset($data['entityDefs'][$entity]['fields']['complete'])) {
                     $data['entityDefs'][$entity]['fields']['complete'] = [
-                        'type'                     => 'completenessVarcharMultiLang',
+                        'type'                     => 'varcharMultiLang',
+                        'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
                         'readOnly'                 => true,
                         'default'                  => '0',
                         "trim"                     => true,

@@ -8,7 +8,7 @@ Espo.define('completeness:views/record/panels/default-side', 'class-replace!comp
             Dep.prototype.setup.call(this);
 
             if (this.getMetadata().get('scopes.' + this.model.name + '.hasCompleteness')) {
-                this.createField('complete', true, 'multilang:views/fields/completeness-varchar-multilang');
+                this.createField('complete', true);
                 this.listenTo(this.model, 'after:save', function () {
                     this.getView('complete').reRender();
                 }, this);
