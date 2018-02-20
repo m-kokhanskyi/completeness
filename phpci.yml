@@ -1,0 +1,18 @@
+build_settings:
+  verbose: true
+  clone_depth: 1
+  ignore:
+    - "data"
+setup:
+test:
+  php_code_sniffer:
+    standard: "PSR2"
+  php_cpd:
+    allow_failures: false
+  php_docblock_checker:
+        allowed_warnings: 0
+        skip_classes: false
+  php_loc:
+    allow_failures: false
+complete:
+  \Intaro\PHPCI\Plugin\Redmine:
