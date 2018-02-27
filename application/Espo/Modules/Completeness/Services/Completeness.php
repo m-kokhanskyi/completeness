@@ -61,18 +61,24 @@ class Completeness extends Base
             /**
              * For multilang fields
              */
-            if (!empty($multilangRequireds = $this->getRequireds($entityName, true))) {
-                // prepare coefficient
-                $multilangCoefficient = 100 / count($multilangRequireds);
+            if ($this->getConfig()->get('isMultilangActive')) {
+                if (!empty($multilangRequireds = $this->getRequireds($entityName, true))) {
+                    // prepare coefficient
+                    $multilangCoefficient = 100 / count($multilangRequireds);
 
-                foreach ($this->getLanguages() as $language) {
-                    $multilangComplete = 0;
-                    foreach ($multilangRequireds as $field) {
-                        if (!empty($entity->get(Util::toCamelCase($field.'_'.strtolower($language))))) {
-                            $multilangComplete += $multilangCoefficient;
+                    foreach ($this->getLanguages() as $language) {
+                        $multilangComplete = 0;
+                        foreach ($multilangRequireds as $field) {
+                            if (!empty($entity->get(Util::toCamelCase($field.'_'.strtolower($language))))) {
+                                $multilangComplete += $multilangCoefficient;
+                            }
                         }
+                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), $multilangComplete);
                     }
-                    $entity->set(Util::toCamelCase('complete_'.strtolower($language)), $multilangComplete);
+                } else {
+                    foreach ($this->getLanguages() as $language) {
+                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), 100);
+                    }
                 }
             }
 
@@ -153,7 +159,7 @@ class Completeness extends Base
 
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
-                if (!empty($row['required']) && in_array($row['type'], $this->getMultilangTypes())) {
+                if (!empty($row['required']) && !empty($row['isMultilang'])) {
                     $result[] = $name;
                 }
             } else {
