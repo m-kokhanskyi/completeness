@@ -1,5 +1,4 @@
 {
-    "required": ["Multilang"],
     "disabled": false,
-    "order": 185
+    "order": 5200
 }
