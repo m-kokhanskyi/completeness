@@ -199,28 +199,6 @@ class Completeness extends Base
     }
 
     /**
-     * Get multilang fields
-     *
-     * @return array
-     */
-    protected function getMultilangTypes(): array
-    {
-        // prepare result
-        $result = [];
-
-        // prepare path
-        $path = 'application/Espo/Modules/Multilang/Configs/Config.php';
-        if (file_exists($path)) {
-            $data = include $path;
-            if (!empty($data['multilangFields'])) {
-                $result = $data['multilangFields'];
-            }
-        }
-
-        return $result;
-    }
-
-    /**
      * Translate field
      *
      * @param string $key

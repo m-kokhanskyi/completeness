@@ -1,5 +1,5 @@
 {
-    "name": "treo-crm/completeness",
+    "name": "treo-module/completeness",
     "description": "Completeness module for TreoPIM",
     "authors": [
         {
@@ -16,5 +16,16 @@
             "type": "composer",
             "url": "https://packagist.zinitsolutions.com/packages.json"
         }
-    ]
+    ],
+    "extra": {
+        "treoId": "Completeness",
+        "name": {
+            "default": "Completeness",
+            "de_DE": "Vollständigkeit"
+        },
+        "description": {
+            "default": "The module enables to check the level of filling of entity with the requireds fields. If this level is less then 100%, such an entity is impossible to activate.",
+            "de_DE": "Das Modul ermöglicht die Entity-Prüfung nach den ausgefüllten Pflichtfeldern. Ist die Vollständigkeit niedriger als 100%, lässt sich der Entity nicht aktivieren."
+        }
+    }
 }
