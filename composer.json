@@ -9,12 +9,12 @@
     ],
     "require": {
         "php": "^7.1",
-        "treo-crm/multilang": "^1.0.0"
+        "treo-module/multilang": "^1.0.0"
     },
     "repositories": [
         {
             "type": "composer",
-            "url": "https://packagist.zinitsolutions.com/packages.json"
+            "url": "https://packagist.zinitsolutions.com"
         }
     ],
     "extra": {
