@@ -4,7 +4,7 @@ declare(strict_types = 1);
 namespace Espo\Modules\Completeness\Metadata;
 
 use Espo\Core\Utils\Util;
-use Espo\Modules\TreoCrm\Metadata\AbstractMetadata;
+use Espo\Modules\TreoCore\Metadata\AbstractMetadata;
 
 /**
  * Metadata class
