@@ -1,9 +1,9 @@
 <?php
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
-use Espo\Modules\TreoCrm\Listeners\AbstractListener;
+use Espo\Modules\TreoCore\Listeners\AbstractListener;
 
 /**
  * EntityManager listener
