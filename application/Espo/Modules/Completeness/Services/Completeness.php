@@ -7,7 +7,7 @@ use Espo\Core\Services\Base;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
 use Espo\Core\Exceptions;
-use Espo\Modules\TreoCrm\Core\Utils\Metadata;
+use Espo\Modules\TreoCore\Core\Utils\Metadata;
 
 /**
  * Completeness service
