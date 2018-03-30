@@ -1,4 +1,24 @@
 <?php
+/**
+ * Completeness
+ * TreoPIM Premium Plugin
+ * Copyright (c) Zinit Solutions GmbH
+ *
+ * This Software is the property of Zinit Solutions GmbH and is protected
+ * by copyright law - it is NOT Freeware and can be used only in one project
+ * under a proprietary license, which is delivered along with this program.
+ * If not, see http://treopim.com/eula.
+ *
+ * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
+ * Any unauthorised use of this Software without a valid license is
+ * a violation of the License Agreement.
+ *
+ * According to the terms of the license you shall not resell, sublicense,
+ * rent, lease, distribute or otherwise transfer rights or usage of this
+ * Software or its derivatives. You may modify the code of this Software
+ * for your own needs, if source code is provided.
+ */
+
 declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
@@ -13,27 +33,6 @@ use Espo\Modules\TreoCore\Listeners\AbstractListener;
 class EntityManager extends AbstractListener
 {
     /**
-     * @var array
-     */
-    protected $scopesConfig = null;
-
-    /**
-     * Before update action
-     *
-     * @param array $data
-     *
-     * @return void
-     */
-    public function beforeUpdate(array $data)
-    {
-        // update scopes
-        $this
-            ->getContainer()
-            ->get('metadata')
-            ->set('scopes', $data['name'], $this->getPreparedScopesData($data['data']));
-    }
-
-    /**
      * After update action
      *
      * @param array $data
@@ -45,53 +44,10 @@ class EntityManager extends AbstractListener
         if (!empty($data['data']['hasCompleteness'])) {
             // recalc complete param
             $this
-                ->container
+                ->getContainer()
                 ->get('serviceFactory')
                 ->create('Completeness')
                 ->recalcEntity($data['name']);
         }
-    }
-
-    /**
-     * Get prepared scopes data
-     *
-     * @param array $data
-     *
-     * @return array
-     */
-    protected function getPreparedScopesData(array $data): array
-    {
-        $scopeData = [];
-        foreach ($data as $key => $value) {
-            if (in_array($key, $this->getScopesConfig()['edited'])) {
-                $scopeData[$key] = $value;
-            }
-        }
-
-        return $scopeData;
-    }
-
-    /**
-     * Get scopes config
-     *
-     * @return array
-     */
-    protected function getScopesConfig(): array
-    {
-        if (is_null($this->scopesConfig)) {
-            // prepare result
-            $this->scopesConfig = [];
-
-            foreach ($this->getContainer()->get('metadata')->getModuleList() as $module) {
-                // prepare file
-                $file = sprintf('application/Espo/Modules/%s/Configs/Scopes.php', $module);
-
-                if (file_exists($file)) {
-                    $this->scopesConfig = array_merge_recursive($this->scopesConfig, include $file);
-                }
-            }
-        }
-
-        return $this->scopesConfig;
     }
 }
