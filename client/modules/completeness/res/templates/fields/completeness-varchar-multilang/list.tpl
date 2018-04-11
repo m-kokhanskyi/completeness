@@ -21,6 +21,8 @@
     }
 </style>
 <div class="completeness general">{{#if isNotEmpty}}{{value}}%{{else}}{{translate 'None'}}{{/if}}</div>
+{{#if valueList}}
+<div class="multilang-labels hidden">
 {{#each valueList}}
     <div class="completeness list-elem-{{index}}">
         <label class="control-label" data-name="{{name}}">
@@ -29,3 +31,5 @@
         <span>{{#if isNotEmpty}}{{value}}%{{else}}{{translate 'None'}}{{/if}}</span>
     </div>
 {{/each}}
+</div>
+{{/if}}
