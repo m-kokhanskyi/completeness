@@ -9,8 +9,8 @@
   ],
   "require": {
     "php": "^7.1",
-    "treo/treo": "^1.7.7",
-    "treo-module/multilang": "^1.3.0"
+    "treo/treo": "1.9.*",
+    "treo-module/multilang": "1.6.*"
   },
   "extra": {
     "treoId": "Completeness",
