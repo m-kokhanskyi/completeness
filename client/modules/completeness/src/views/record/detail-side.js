@@ -29,6 +29,11 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
                         return;
                     }
                 }
+                if (p.accessDataList) {
+                    if (!Espo.Utils.checkAccessDataList(p.accessDataList, this.getAcl(), this.getUser())) {
+                        return false;
+                    }
+                }
                 return true;
             }, this);
 
@@ -62,6 +67,7 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
                 name: 'complete',
                 label: 'Complete',
                 view: 'completeness:views/record/panels/complete-side',
+                isForm: true,
                 fieldList: [
                     {
                         name: 'complete'
