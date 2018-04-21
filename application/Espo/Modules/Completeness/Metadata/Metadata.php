@@ -64,7 +64,8 @@ class Metadata extends AbstractMetadata
                         "trim"                     => true,
                         'layoutFiltersDisabled'    => true,
                         'layoutMassUpdateDisabled' => true,
-                        'customizationDisabled'    => true
+                        'customizationDisabled'    => true,
+                        'importDisabled'           => true
                     ];
 
                     foreach ($languages as $language) {
@@ -78,7 +79,8 @@ class Metadata extends AbstractMetadata
                             'layoutDetailDisabled'     => true,
                             'layoutFiltersDisabled'    => true,
                             'layoutMassUpdateDisabled' => true,
-                            'customizationDisabled'    => true
+                            'customizationDisabled'    => true,
+                            'importDisabled'           => true
                         ];
                     }
                 }
