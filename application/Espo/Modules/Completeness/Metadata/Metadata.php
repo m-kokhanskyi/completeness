@@ -19,7 +19,7 @@
  * for your own needs, if source code is provided.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Metadata;
 
@@ -70,12 +70,12 @@ class Metadata extends AbstractMetadata
 
                     foreach ($languages as $language) {
                         // prepare key
-                        $key = Util::toCamelCase('complete_'.strtolower($language));
+                        $key = Util::toCamelCase('complete_' . strtolower($language));
 
                         $data['entityDefs'][$entity]['fields'][$key] = [
                             'type'                     => 'varchar',
                             'default'                  => '0',
-                            'layoutListDisabled'       => true,
+                            'layoutListDisabled'       => false,
                             'layoutDetailDisabled'     => true,
                             'layoutFiltersDisabled'    => true,
                             'layoutMassUpdateDisabled' => true,
