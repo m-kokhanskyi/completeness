@@ -73,7 +73,8 @@ class Metadata extends AbstractMetadata
                         $key = Util::toCamelCase('complete_' . strtolower($language));
 
                         $data['entityDefs'][$entity]['fields'][$key] = [
-                            'type'                     => 'varchar',
+                            'type'                     => 'varcharMultiLang',
+                            'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
                             'default'                  => '0',
                             'layoutListDisabled'       => false,
                             'layoutDetailDisabled'     => true,
