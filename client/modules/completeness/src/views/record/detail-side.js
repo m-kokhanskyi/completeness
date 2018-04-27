@@ -12,7 +12,7 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
                 this.setupDefaultPanel();
             }
 
-            if (this.getMetadata().get('scopes.' + this.scope + '.hasCompleteness')) {
+            if (this.getMetadata().get('scopes.' + this.scope + '.hasCompleteness') && ['detail', 'detailSmall'].includes(this.type)) {
                 this.setupCompletenessPanel();
             }
 
@@ -67,7 +67,6 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
                 name: 'complete',
                 label: 'Complete',
                 view: 'completeness:views/record/panels/complete-side',
-                isForm: true,
                 fieldList: [
                     {
                         name: 'complete'
