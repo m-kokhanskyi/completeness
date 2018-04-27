@@ -75,10 +75,9 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
 
         afterRender: function() {
             if(this.mode === 'list') {
-                this.floatColor(parseFloat(this.$el.find('div.completeness.general')[0].innerText), this.$el.find('div.completeness.general'));
-                this.langFieldNameList.forEach(function (e, i) {
-                    this.floatColor(parseFloat(this.$el.find('div.completeness.list-elem-' + i + ' > span')[0].innerText), this.$el.find('div.completeness.list-elem-' + i));
-                }, this);
+                if (this.el) {
+                    this.floatColor(parseFloat(this.$el.find('div.completeness.general')[0].innerText), this.$el.find('div.completeness.general'));
+                }
             }
             if(this.mode === 'detail') {
                 this.progressBarColor(parseFloat(this.$el.find('div.completeness.general')[0].innerText), this.$el.find('div.completeness.general .progress-bar'));
@@ -112,7 +111,7 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
             if (this.disableFormatting) {
                 return value;
             }
-            if (value !== null) {
+            if (value) {
                 var parts = value.toString().split(".");
                 parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousandSeparator);
                 return parts.join(this.decimalMark);
