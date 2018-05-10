@@ -26,7 +26,10 @@ Espo.define('completeness:views/fields/base', 'class-replace!completeness:views/
             Dep.prototype.setup.call(this);
 
             if(this.getMetadata().get('scopes.' + this.model.name + '.hasCompleteness')) {
-                this.validations.splice(this.validations.indexOf('required'), 1);
+                this.validations = Espo.Utils.clone(this.validations);
+                if (this.validations.includes('required')) {
+                    this.validations.splice(this.validations.indexOf('required'), 1);
+                }
             }
         },
     });
