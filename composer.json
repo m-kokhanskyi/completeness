@@ -8,8 +8,7 @@
     }
   ],
   "require": {
-    "php": "^7.1",
-    "treo/treo": "1.9.*",
+    "treo/treo": "1.10.*",
     "treo-module/multilang": "1.6.*"
   },
   "extra": {
