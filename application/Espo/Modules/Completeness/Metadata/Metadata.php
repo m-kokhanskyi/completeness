@@ -47,9 +47,9 @@ class Metadata extends AbstractMetadata
         $config = $this->getContainer()->get('config');
 
         // get languages
-        $languages = [];
-        if (!empty($config->get('isMultilangActive'))) {
-            $languages = $config->get('inputLanguageList');
+        $languages = $config->get('inputLanguageList');
+        if (empty($languages)) {
+            $languages = [];
         }
 
         foreach ($data['entityDefs'] as $entity => $row) {
