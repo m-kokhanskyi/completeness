@@ -8,7 +8,7 @@
     }
   ],
   "require": {
-    "treo/treo": "1.11.*",
+    "treo/treo": ">=1.11.2 <1.12",
     "treo-module/multilang": "1.6.*"
   },
   "extra": {
