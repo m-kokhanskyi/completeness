@@ -1,3 +1,7 @@
+1.3.5  2018-05-15 15:03:28 Europe/Kiev
+    * UST #63680 : Змінити механізм додавання scope (Roman Ratsun)
+    * BUG #63454 : При включённом complete неправильно работает валидация (Valeriy Shamota)
+
 1.3.4  2018-05-14 14:22:38 Europe/Kiev
     * UST #63574 : Update module to TreoCore 1.11.* (Roman Ratsun)
 

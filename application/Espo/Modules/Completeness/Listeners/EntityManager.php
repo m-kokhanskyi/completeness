@@ -33,21 +33,24 @@ use Espo\Modules\TreoCore\Listeners\AbstractListener;
 class EntityManager extends AbstractListener
 {
     /**
-     * After update action
-     *
      * @param array $data
      *
-     * @return void
+     * @return array
      */
-    public function afterUpdate(array $data)
+    public function afterActionUpdateEntity(array $data): array
     {
-        if (!empty($data['data']['hasCompleteness'])) {
+        // prepare post data
+        $postData = get_object_vars($data['data']);
+
+        if (!empty($postData['hasCompleteness'])) {
             // recalc complete param
             $this
                 ->getContainer()
                 ->get('serviceFactory')
                 ->create('Completeness')
-                ->recalcEntity($data['name']);
+                ->recalcEntity($postData['name']);
         }
+
+        return $data;
     }
 }
