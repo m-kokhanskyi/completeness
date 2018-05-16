@@ -19,10 +19,12 @@
  * for your own needs, if source code is provided.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Services;
 
+use Espo\Core\Loaders\EntityManager as EntityManagerLoader;
+use Espo\Core\ORM\EntityManager;
 use Espo\Core\Services\Base;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
@@ -50,13 +52,14 @@ class Completeness extends Base
          */
         $this->addDependency('metadata');
         $this->addDependency('language');
+        $this->addDependency('container');
     }
 
     /**
      * Update completeness
      *
      * @param Entity $entity
-     * @param bool $showException
+     * @param bool   $showException
      *
      * @return Entity
      */
@@ -89,15 +92,15 @@ class Completeness extends Base
                     foreach ($this->getLanguages() as $language) {
                         $multilangComplete = 0;
                         foreach ($multilangRequireds as $field) {
-                            if (!empty($entity->get(Util::toCamelCase($field.'_'.strtolower($language))))) {
+                            if (!empty($entity->get(Util::toCamelCase($field . '_' . strtolower($language))))) {
                                 $multilangComplete += $multilangCoefficient;
                             }
                         }
-                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), $multilangComplete);
+                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), $multilangComplete);
                     }
                 } else {
                     foreach ($this->getLanguages() as $language) {
-                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), 100);
+                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), 100);
                     }
                 }
             }
@@ -119,20 +122,24 @@ class Completeness extends Base
      * Recalc all completeness for entity instances
      *
      * @param string $entityName
+     * @param bool   $force
      *
      * @return void
      */
-    public function recalcEntity(string $entityName): void
+    public function recalcEntity(string $entityName, bool $force = false): void
     {
+        // get entity manager
+        $entityManager = ($force) ? $this->createEntityManager() : $this->getEntityManager();
+
         // get entities
-        $entities = $this->getEntityManager()->getRepository($entityName)->find();
+        $entities = $entityManager->getRepository($entityName)->find();
         if (count($entities) > 0) {
             foreach ($entities as $entity) {
                 // update completeness
                 $entity = $this->updateCompleteness($entity, false);
 
                 // save entity
-                $this->getEntityManager()->saveEntity($entity);
+                $entityManager->saveEntity($entity);
             }
         }
     }
@@ -158,14 +165,14 @@ class Completeness extends Base
      */
     protected function hasCompleteness(string $entityName): bool
     {
-        return !empty($this->getMetadata()->get('scopes.'.$entityName.'.hasCompleteness'));
+        return !empty($this->getMetadata()->get('scopes.' . $entityName . '.hasCompleteness'));
     }
 
     /**
      * Get requireds
      *
      * @param string $entityName
-     * @param bool $isMultilang
+     * @param bool   $isMultilang
      *
      * @return array
      */
@@ -175,7 +182,7 @@ class Completeness extends Base
         $result = [];
 
         // get entity defs
-        $entityDefs = $this->getMetadata()->get('entityDefs.'.$entityName.'.fields');
+        $entityDefs = $this->getMetadata()->get('entityDefs.' . $entityName . '.fields');
 
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
@@ -228,5 +235,15 @@ class Completeness extends Base
     protected function translate(string $key): string
     {
         return $this->getInjection('language')->translate($key, 'exceptions', 'Completeness');
+    }
+
+    /**
+     * Create EntityManager
+     *
+     * @return EntityManager
+     */
+    protected function createEntityManager(): EntityManager
+    {
+        return (new EntityManagerLoader($this->getInjection('container')))->load();
     }
 }
