@@ -37,20 +37,74 @@ class EntityManager extends AbstractListener
      *
      * @return array
      */
-    public function afterActionUpdateEntity(array $data): array
+    public function beforeActionUpdateEntity(array $data): array
     {
-        // prepare post data
+        // prepare data
         $postData = get_object_vars($data['data']);
+        $scope = $postData['name'];
+        $hasCompleteness = !empty($postData['hasCompleteness']);
 
-        if (!empty($postData['hasCompleteness'])) {
-            // recalc complete param
+        if ($hasCompleteness !== $this->getHasCompleteness($scope)) {
+            // update scope
+            $this->setHasCompleteness($scope, $hasCompleteness);
+
+            // rebuild DB
             $this
                 ->getContainer()
-                ->get('serviceFactory')
-                ->create('Completeness')
-                ->recalcEntity($postData['name']);
+                ->get('dataManager')
+                ->rebuild();
+
+            if ($hasCompleteness) {
+                // recalc complete param
+                $this
+                    ->getContainer()
+                    ->get('serviceFactory')
+                    ->create('Completeness')
+                    ->recalcEntity($scope, true);
+            }
         }
 
         return $data;
+    }
+
+    /**
+     * Set hasCompleteness param
+     *
+     * @param string $scope
+     * @param bool   $value
+     */
+    protected function setHasCompleteness(string $scope, bool $value): void
+    {
+        // prepare data
+        $data = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get("scopes.{$scope}");
+        $data['hasCompleteness'] = $value;
+
+        $this
+            ->getContainer()
+            ->get('metadata')
+            ->set("scopes", $scope, $data);
+
+        // save
+        $this->getContainer()->get('metadata')->save();
+    }
+
+    /**
+     * Get hasCompleteness param
+     *
+     * @param string $scope
+     *
+     * @return bool
+     */
+    protected function getHasCompleteness(string $scope): bool
+    {
+        $result = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get("scopes.{$scope}.hasCompleteness");
+
+        return !empty($result);
     }
 }
