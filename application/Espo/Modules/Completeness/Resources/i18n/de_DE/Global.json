@@ -27,10 +27,5 @@
     },
     "labels": {
         "Complete": "Vollständigkeit"
-    },
-    "dashlets": {
-        "CompletenessOverview": "Vollständigkeit Übersicht",
-        "ChannelCompleteness": "Kanal Vollständigkeits",
-        "LocaleCompleteness": "Lokale Vollständigkeits"
     }
 }
