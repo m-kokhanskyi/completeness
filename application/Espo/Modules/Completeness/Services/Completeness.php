@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Services;
 
-use Espo\Core\Loaders\EntityManager as EntityManagerLoader;
 use Espo\Core\ORM\EntityManager;
 use Espo\Core\Services\Base;
 use Espo\Core\Utils\Util;
@@ -128,18 +127,20 @@ class Completeness extends Base
      */
     public function recalcEntity(string $entityName, bool $force = false): void
     {
-        // get entity manager
-        $entityManager = ($force) ? $this->createEntityManager() : $this->getEntityManager();
+        if ($force) {
+            // reload entity manager
+            $this->getInjection('container')->reload('entityManager');
+        }
 
         // get entities
-        $entities = $entityManager->getRepository($entityName)->find();
+        $entities = $this->getEntityManager()->getRepository($entityName)->find();
         if (count($entities) > 0) {
             foreach ($entities as $entity) {
                 // update completeness
                 $entity = $this->updateCompleteness($entity, false);
 
                 // save entity
-                $entityManager->saveEntity($entity);
+                $this->getEntityManager()->saveEntity($entity);
             }
         }
     }
@@ -238,12 +239,10 @@ class Completeness extends Base
     }
 
     /**
-     * Create EntityManager
-     *
      * @return EntityManager
      */
-    protected function createEntityManager(): EntityManager
+    protected function getEntityManager()
     {
-        return (new EntityManagerLoader($this->getInjection('container')))->load();
+        return $this->getInjection('container')->get('entityManager');
     }
 }
