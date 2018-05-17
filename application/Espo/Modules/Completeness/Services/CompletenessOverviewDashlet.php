@@ -96,7 +96,7 @@ class CompletenessOverviewDashlet extends AbstractProductsByChannelsDashlet
      *
      * @return array
      */
-    public function getCompletenessFieldInProduct(): array
+    protected function getCompletenessFieldInProduct(): array
     {
         // get Product fields
         $fields = $this->getMetadata()->get('entityDefs.Product.fields');

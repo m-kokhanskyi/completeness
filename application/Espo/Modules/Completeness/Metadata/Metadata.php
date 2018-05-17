@@ -33,7 +33,6 @@ use Espo\Modules\TreoCore\Metadata\AbstractMetadata;
  */
 class Metadata extends AbstractMetadata
 {
-
     /**
      * Modify
      *
@@ -42,6 +41,22 @@ class Metadata extends AbstractMetadata
      * @return array
      */
     public function modify(array $data): array
+    {
+        $data = $this->prepareCompleteFields($data);
+
+        $data = $this->prepareCompletenessDashlets($data);
+
+        return $data;
+    }
+
+    /**
+     * Prepare completeness fields
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function prepareCompleteFields(array $data): array
     {
         // get config
         $config = $this->getContainer()->get('config');
@@ -98,6 +113,28 @@ class Metadata extends AbstractMetadata
                         'customizationDisabled'    => true
                     ];
                 }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Prepare completeness dashlets
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function prepareCompletenessDashlets(array $data): array
+    {
+        foreach ($data['dashlets'] as $name => $value) {
+            $type = $value['type'] ?? '';
+            $entity = $value['entity'] ?? '';
+            $disableCompleteness = empty($data['scopes'][$entity]['hasCompleteness']);
+
+            if ($type === 'completeness' && !empty($entity) && $disableCompleteness) {
+                unset($data['dashlets'][$name]);
             }
         }
 

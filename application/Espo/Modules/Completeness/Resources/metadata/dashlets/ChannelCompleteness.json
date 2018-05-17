@@ -1,5 +1,7 @@
 {
     "view": "completeness:views/dashlets/channel-completeness",
+    "type": "completeness",
+    "entity": "Product",
     "options": {
         "fields": {
             "title": {
