@@ -51,7 +51,6 @@ class Completeness extends Base
          */
         $this->addDependency('metadata');
         $this->addDependency('language');
-        $this->addDependency('container');
     }
 
     /**
@@ -129,7 +128,7 @@ class Completeness extends Base
     {
         if ($force) {
             // reload entity manager
-            $this->getInjection('container')->reload('entityManager');
+            $this->reloadDependency('entityManager');
         }
 
         // get entities
@@ -236,13 +235,5 @@ class Completeness extends Base
     protected function translate(string $key): string
     {
         return $this->getInjection('language')->translate($key, 'exceptions', 'Completeness');
-    }
-
-    /**
-     * @return EntityManager
-     */
-    protected function getEntityManager()
-    {
-        return $this->getInjection('container')->get('entityManager');
     }
 }
