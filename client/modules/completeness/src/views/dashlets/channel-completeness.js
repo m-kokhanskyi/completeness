@@ -115,7 +115,7 @@ Espo.define('completeness:views/dashlets/channel-completeness', ['views/dashlets
                             }
                         ]
                     };
-                } else {
+                } else if (item.default) {
                     preparedData.secondary.push({
                         id: item.id,
                         title: item.name,
