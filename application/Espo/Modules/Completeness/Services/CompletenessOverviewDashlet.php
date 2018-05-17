@@ -63,24 +63,20 @@ class CompletenessOverviewDashlet extends AbstractProductsByChannelsDashlet
 
         $completenessFields = $this->getCompletenessFieldInProduct();
 
-        foreach ($completenessFields as $fieldName) {
-            $productFields[Util::fromCamelCase($fieldName)] = $fieldName;
+        foreach ($completenessFields as $key => $fieldName) {
+            $productFields[Util::fromCamelCase($fieldName)] = $key;
         }
 
         if (count($completenessFields) > 0) {
             foreach ($this->getProductsWithCategoryByChannel($productFields) as $channelId => $channelData) {
-                $preparedData = [
-                    'id'   => (string)$channelId,
-                    'name' => (string)$channelData['channel']->get('name')
-                ];
-
+                // get channel complete
                 $data = $this->getChannelComplete($channelData, $completenessFields);
 
-                foreach ($data as $filedName => $value) {
-                    $preparedData[array_search($filedName, $completenessFields)] = $value;
-                };
+                // prepare channel data
+                $data['id'] = (string)$channelId;
+                $data['name'] = (string)$channelData['channel']->get('name');
 
-                $result['list'][] = $preparedData;
+                $result['list'][] = $data;
             }
 
             $result['list'][] = $this->getCompletenessTotal($completenessFields);
@@ -205,8 +201,8 @@ class CompletenessOverviewDashlet extends AbstractProductsByChannelsDashlet
         $completenessData = [];
 
         // prepare complete data
-        foreach ($completenessFields as $fieldName) {
-            $completenessData[$fieldName] = null;
+        foreach ($completenessFields as $key => $fieldName) {
+            $completenessData[$key] = null;
         }
 
         // calc complete sum
