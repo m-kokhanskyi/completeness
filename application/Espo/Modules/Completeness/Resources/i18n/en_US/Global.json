@@ -27,5 +27,10 @@
     },
     "labels": {
         "Complete": "Complete"
+    },
+    "dashlets": {
+        "CompletenessOverview": "Completeness Overview",
+        "ChannelCompleteness": "Channel Completeness",
+        "LocaleCompleteness": "Locale Completeness"
     }
 }

@@ -19,10 +19,11 @@
  * for your own needs, if source code is provided.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Services;
 
+use Espo\Core\ORM\EntityManager;
 use Espo\Core\Services\Base;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
@@ -56,9 +57,10 @@ class Completeness extends Base
      * Update completeness
      *
      * @param Entity $entity
-     * @param bool $showException
+     * @param bool   $showException
      *
      * @return Entity
+     * @throws Exceptions\Error
      */
     public function updateCompleteness(Entity $entity, bool $showException = true): Entity
     {
@@ -89,15 +91,15 @@ class Completeness extends Base
                     foreach ($this->getLanguages() as $language) {
                         $multilangComplete = 0;
                         foreach ($multilangRequireds as $field) {
-                            if (!empty($entity->get(Util::toCamelCase($field.'_'.strtolower($language))))) {
+                            if (!empty($entity->get(Util::toCamelCase($field . '_' . strtolower($language))))) {
                                 $multilangComplete += $multilangCoefficient;
                             }
                         }
-                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), $multilangComplete);
+                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), $multilangComplete);
                     }
                 } else {
                     foreach ($this->getLanguages() as $language) {
-                        $entity->set(Util::toCamelCase('complete_'.strtolower($language)), 100);
+                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), 100);
                     }
                 }
             }
@@ -119,11 +121,17 @@ class Completeness extends Base
      * Recalc all completeness for entity instances
      *
      * @param string $entityName
+     * @param bool   $force
      *
      * @return void
      */
-    public function recalcEntity(string $entityName): void
+    public function recalcEntity(string $entityName, bool $force = false): void
     {
+        if ($force) {
+            // reload entity manager
+            $this->reloadDependency('entityManager');
+        }
+
         // get entities
         $entities = $this->getEntityManager()->getRepository($entityName)->find();
         if (count($entities) > 0) {
@@ -146,7 +154,9 @@ class Completeness extends Base
      */
     protected function getEntityName(Entity $entity): string
     {
-        return array_pop(explode("\\", get_class($entity)));
+        $className =  explode("\\", get_class($entity));
+
+        return array_pop($className);
     }
 
     /**
@@ -158,14 +168,14 @@ class Completeness extends Base
      */
     protected function hasCompleteness(string $entityName): bool
     {
-        return !empty($this->getMetadata()->get('scopes.'.$entityName.'.hasCompleteness'));
+        return !empty($this->getMetadata()->get('scopes.' . $entityName . '.hasCompleteness'));
     }
 
     /**
      * Get requireds
      *
      * @param string $entityName
-     * @param bool $isMultilang
+     * @param bool   $isMultilang
      *
      * @return array
      */
@@ -175,7 +185,7 @@ class Completeness extends Base
         $result = [];
 
         // get entity defs
-        $entityDefs = $this->getMetadata()->get('entityDefs.'.$entityName.'.fields');
+        $entityDefs = $this->getMetadata()->get('entityDefs.' . $entityName . '.fields');
 
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
@@ -196,6 +206,7 @@ class Completeness extends Base
      * Get metadata
      *
      * @return Metadata
+     * @throws Exceptions\Error
      */
     protected function getMetadata()
     {
@@ -224,6 +235,7 @@ class Completeness extends Base
      * @param string $key
      *
      * @return string
+     * @throws Exceptions\Error
      */
     protected function translate(string $key): string
     {
