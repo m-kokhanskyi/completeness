@@ -154,7 +154,9 @@ class Completeness extends Base
      */
     protected function getEntityName(Entity $entity): string
     {
-        return array_pop(explode("\\", get_class($entity)));
+        $className =  explode("\\", get_class($entity));
+
+        return array_pop($className);
     }
 
     /**
