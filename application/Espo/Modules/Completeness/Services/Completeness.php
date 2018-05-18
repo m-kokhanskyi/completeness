@@ -60,6 +60,7 @@ class Completeness extends Base
      * @param bool   $showException
      *
      * @return Entity
+     * @throws Exceptions\Error
      */
     public function updateCompleteness(Entity $entity, bool $showException = true): Entity
     {
@@ -153,7 +154,9 @@ class Completeness extends Base
      */
     protected function getEntityName(Entity $entity): string
     {
-        return array_pop(explode("\\", get_class($entity)));
+        $className =  explode("\\", get_class($entity));
+
+        return array_pop($className);
     }
 
     /**
@@ -203,6 +206,7 @@ class Completeness extends Base
      * Get metadata
      *
      * @return Metadata
+     * @throws Exceptions\Error
      */
     protected function getMetadata()
     {
@@ -231,6 +235,7 @@ class Completeness extends Base
      * @param string $key
      *
      * @return string
+     * @throws Exceptions\Error
      */
     protected function translate(string $key): string
     {
