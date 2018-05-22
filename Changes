@@ -1,3 +1,6 @@
+1.3.7  2018-05-22 13:06:43 Europe/Kiev
+    * UST #63985 : Надати можливість перевизначати в'юшку для відображення комплітнес сайд панелі через clientDefs сутності (модуль Completeness) (Yurii Kondratskyi)
+
 1.3.6  2018-05-18 11:23:16 Europe/Kiev
     * UST #62383 : Розробити дашлети (модуль Completeness) | Back (Yuriy  Haiduchyk)
     * BUG #63740 : Error in EntityManager listener (Roman Ratsun)
