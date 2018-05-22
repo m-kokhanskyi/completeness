@@ -63,10 +63,11 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
         },
 
         setupCompletenessPanel() {
+            let view = this.getMetadata().get(['clientDefs', this.model.name, 'completenessPanelView']) || 'completeness:views/record/panels/complete-side';
             let completenessPanelDefs = {
                 name: 'complete',
                 label: 'Complete',
-                view: 'completeness:views/record/panels/complete-side',
+                view: view,
                 fieldList: [
                     {
                         name: 'complete'
@@ -76,5 +77,5 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
             this.panelList.push(completenessPanelDefs);
         }
 
-    });
+    })
 });
