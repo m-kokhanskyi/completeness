@@ -1,6 +1,5 @@
 {
   "name": "treo-module/completeness",
-  "description": "Completeness module for TreoPIM",
   "authors": [
     {
       "name": "Roman Ratsun",
@@ -14,12 +13,10 @@
   "extra": {
     "treoId": "Completeness",
     "name": {
-      "default": "Completeness",
-      "de_DE": "Vollständigkeit"
+      "default": "Completeness"
     },
     "description": {
-      "default": "The module enables to check the level of filling of entity with the requireds fields. If this level is less then 100%, such an entity is impossible to activate.",
-      "de_DE": "Das Modul ermöglicht die Entity-Prüfung nach den ausgefüllten Pflichtfeldern. Ist die Vollständigkeit niedriger als 100%, lässt sich der Entity nicht aktivieren."
+      "default": "The module enables to control and improve the product data quality by measuring completeness of data."
     }
   }
 }
