@@ -102,6 +102,7 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
                 element.addClass('progress-bar-success');
             } else if (value === 0) {
                 element.addClass('progress-bar-danger');
+                element.parent().siblings('.progress-value').addClass('none')
             } else {
                 element.addClass('progress-bar-warning');
             }
