@@ -54,38 +54,38 @@ class Metadata extends AbstractMetadata
 
         foreach ($data['entityDefs'] as $entity => $row) {
             if (!empty($data['scopes'][$entity]['hasCompleteness'])) {
-                // add complete
-                if (!isset($data['entityDefs'][$entity]['fields']['complete'])) {
-                    $data['entityDefs'][$entity]['fields']['complete'] = [
+                // set complete
+                $data['entityDefs'][$entity]['fields']['complete'] = [
+                    'type'                     => 'varcharMultiLang',
+                    'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
+                    'readOnly'                 => true,
+                    'default'                  => '0',
+                    "trim"                     => true,
+                    'layoutFiltersDisabled'    => true,
+                    'layoutMassUpdateDisabled' => true,
+                    'customizationDisabled'    => true,
+                    'importDisabled'           => true,
+                    'exportDisabled'           => true,
+                    'isCompleteness'           => true
+                ];
+
+                foreach ($languages as $language) {
+                    // prepare key
+                    $key = Util::toCamelCase('complete_' . strtolower($language));
+
+                    $data['entityDefs'][$entity]['fields'][$key] = [
                         'type'                     => 'varcharMultiLang',
                         'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
-                        'readOnly'                 => true,
                         'default'                  => '0',
-                        "trim"                     => true,
+                        'layoutListDisabled'       => false,
+                        'layoutDetailDisabled'     => true,
                         'layoutFiltersDisabled'    => true,
                         'layoutMassUpdateDisabled' => true,
                         'customizationDisabled'    => true,
                         'importDisabled'           => true,
+                        'exportDisabled'           => true,
                         'isCompleteness'           => true
                     ];
-
-                    foreach ($languages as $language) {
-                        // prepare key
-                        $key = Util::toCamelCase('complete_' . strtolower($language));
-
-                        $data['entityDefs'][$entity]['fields'][$key] = [
-                            'type'                     => 'varcharMultiLang',
-                            'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
-                            'default'                  => '0',
-                            'layoutListDisabled'       => false,
-                            'layoutDetailDisabled'     => true,
-                            'layoutFiltersDisabled'    => true,
-                            'layoutMassUpdateDisabled' => true,
-                            'customizationDisabled'    => true,
-                            'importDisabled'           => true,
-                            'isCompleteness'           => true
-                        ];
-                    }
                 }
 
                 // add active
