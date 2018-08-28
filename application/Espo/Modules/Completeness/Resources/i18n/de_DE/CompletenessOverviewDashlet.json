@@ -1,6 +1,6 @@
 {
     "fields": {
-        "name": "Channel",
-        "default": "Channel Total"
+        "name": "Name",
+        "default": "standardmäßig"
     }
 }
