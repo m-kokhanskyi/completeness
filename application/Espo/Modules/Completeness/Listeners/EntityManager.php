@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
-use Espo\Modules\TreoCore\Listeners\AbstractListener;
+use Treo\Listeners\AbstractListener;
 
 /**
  * EntityManager listener
