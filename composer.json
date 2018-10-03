@@ -7,7 +7,7 @@
     }
   ],
   "require": {
-    "treo/treo": "^1.11.2",
+    "treo/treopim": "^1.14.3",
     "treo-module/multilang": "^1.6"
   },
   "extra": {
