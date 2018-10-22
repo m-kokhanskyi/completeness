@@ -26,12 +26,12 @@ Espo.define('completeness:views/record/panels/complete-side', 'views/record/pane
             Dep.prototype.setup.call(this);
 
             this.listenTo(this.model, 'after:save', function () {
-                this.getView('complete').reRender();
+                this.getView('completeField').reRender();
             }, this);
             this.listenTo(this.model, 'after:attributesSave', function () {
                 this.model.fetch({
                     success: function () {
-                        this.getView('complete').reRender();
+                        this.getView('completeField').reRender();
                     }.bind(this)
                 });
             }, this)
