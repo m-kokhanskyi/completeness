@@ -40,16 +40,22 @@ class Completeness extends Base
      * Before save action
      *
      * @param Entity $entity
+     * @param array $options
      *
      * @return void
      */
-    public function beforeSave(Entity $entity)
+    public function beforeSave(Entity $entity, array $options = [])
     {
+        $showException = true;
+        if (isset($options['showException']) && is_bool($options['showException'])) {
+            $showException = $options['showException'];
+        }
+
         // update completeness
         $entity = $this
             ->getContainer()
             ->get('serviceFactory')
             ->create('Completeness')
-            ->updateCompleteness($entity);
+            ->updateCompleteness($entity, $showException);
     }
 }
