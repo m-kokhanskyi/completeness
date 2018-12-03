@@ -23,8 +23,6 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Services;
 
-use Espo\Core\ORM\EntityManager;
-use Espo\Core\Services\Base;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
 use Espo\Core\Exceptions;
@@ -35,24 +33,8 @@ use Espo\Core\Utils\Metadata;
  *
  * @author r.ratsun <r.ratsun@zinitsolutions.com>
  */
-class Completeness extends Base
+class Completeness extends \Treo\Services\AbstractService
 {
-
-    /**
-     * Construct
-     */
-    public function __construct(...$args)
-    {
-        // call parent
-        parent::__construct(...$args);
-
-        /**
-         * Dependencies
-         */
-        $this->addDependency('metadata');
-        $this->addDependency('language');
-    }
-
     /**
      * Update completeness
      *
@@ -107,7 +89,7 @@ class Completeness extends Base
             // checking activation
             if (!empty($entity->get('isActive')) && $complete < 100) {
                 if ($showException) {
-                    throw new Exceptions\Error($this->translate('activationFailed'));
+                    throw new Exceptions\Error($this->exception('activationFailed'));
                 } else {
                     $entity->set('isActive', 0);
                 }
@@ -154,7 +136,7 @@ class Completeness extends Base
      */
     protected function getEntityName(Entity $entity): string
     {
-        $className =  explode("\\", get_class($entity));
+        $className = explode("\\", get_class($entity));
 
         return array_pop($className);
     }
@@ -210,7 +192,7 @@ class Completeness extends Base
      */
     protected function getMetadata()
     {
-        return $this->getInjection('metadata');
+        return $this->getContainer()->get('metadata');
     }
 
     /**
@@ -230,15 +212,14 @@ class Completeness extends Base
     }
 
     /**
-     * Translate field
+     * Translate exception
      *
      * @param string $key
      *
      * @return string
-     * @throws Exceptions\Error
      */
-    protected function translate(string $key): string
+    protected function exception(string $key): string
     {
-        return $this->getInjection('language')->translate($key, 'exceptions', 'Completeness');
+        return $this->translate($key, 'exceptions', 'Completeness');
     }
 }
