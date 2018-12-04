@@ -18,16 +18,14 @@
  * for your own needs, if source code is provided.
  */
 
-Espo.define('completeness:views/product/pipes/remove-required-validation-in-attribute-panel', 'view', function (Dep) {
-
-    return Dep.extend({
-
-        _template: '',
+Espo.define('completeness:views/product/pipes/remove-required-validation-in-attribute-panel', 'treo-core:pipe',
+    Dep => Dep.extend({
 
         runPipe() {
             this.getMetadata().data.scopes.productAttributesGrid = {
                 hasCompleteness: true
             };
         }
-    });
-});
+
+    })
+);
