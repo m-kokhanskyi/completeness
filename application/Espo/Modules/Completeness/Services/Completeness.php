@@ -25,8 +25,6 @@ namespace Espo\Modules\Completeness\Services;
 
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
-use Espo\Core\Exceptions;
-use Espo\Core\Utils\Metadata;
 
 /**
  * Completeness service
@@ -39,17 +37,15 @@ class Completeness extends \Treo\Services\AbstractService
      * Update completeness
      *
      * @param Entity $entity
-     * @param bool   $showException
      *
      * @return Entity
-     * @throws Exceptions\Error
      */
-    public function updateCompleteness(Entity $entity, bool $showException = true): Entity
+    public function updateCompleteness(Entity $entity): Entity
     {
         // get entity name
-        $entityName = $this->getEntityName($entity);
+        $entityName = $entity->getEntityType();
 
-        if ($this->hasCompleteness($entityName) && !empty($requireds = $this->getRequireds($entityName))) {
+        if (!empty($requireds = $this->getRequireds($entityName))) {
             // prepare coefficient
             $coefficient = 100 / count($requireds);
 
@@ -88,11 +84,7 @@ class Completeness extends \Treo\Services\AbstractService
 
             // checking activation
             if (!empty($entity->get('isActive')) && $complete < 100) {
-                if ($showException) {
-                    throw new Exceptions\Error($this->exception('activationFailed'));
-                } else {
-                    $entity->set('isActive', 0);
-                }
+                $entity->set('isActive', 0);
             }
         }
 
@@ -119,38 +111,12 @@ class Completeness extends \Treo\Services\AbstractService
         if (count($entities) > 0) {
             foreach ($entities as $entity) {
                 // update completeness
-                $entity = $this->updateCompleteness($entity, false);
+                $entity = $this->updateCompleteness($entity);
 
                 // save entity
                 $this->getEntityManager()->saveEntity($entity);
             }
         }
-    }
-
-    /**
-     * Get entity name
-     *
-     * @param Entity $entity
-     *
-     * @return string
-     */
-    protected function getEntityName(Entity $entity): string
-    {
-        $className = explode("\\", get_class($entity));
-
-        return array_pop($className);
-    }
-
-    /**
-     * Is entity has completeness?
-     *
-     * @param string $entityName
-     *
-     * @return bool
-     */
-    protected function hasCompleteness(string $entityName): bool
-    {
-        return !empty($this->getMetadata()->get('scopes.' . $entityName . '.hasCompleteness'));
     }
 
     /**
@@ -167,7 +133,7 @@ class Completeness extends \Treo\Services\AbstractService
         $result = [];
 
         // get entity defs
-        $entityDefs = $this->getMetadata()->get('entityDefs.' . $entityName . '.fields');
+        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs.' . $entityName . '.fields');
 
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
@@ -185,17 +151,6 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * Get metadata
-     *
-     * @return Metadata
-     * @throws Exceptions\Error
-     */
-    protected function getMetadata()
-    {
-        return $this->getContainer()->get('metadata');
-    }
-
-    /**
      * Get languages
      *
      * @return array
@@ -209,17 +164,5 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         return $languages;
-    }
-
-    /**
-     * Translate exception
-     *
-     * @param string $key
-     *
-     * @return string
-     */
-    protected function exception(string $key): string
-    {
-        return $this->translate($key, 'exceptions', 'Completeness');
     }
 }

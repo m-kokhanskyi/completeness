@@ -19,7 +19,7 @@
  * for your own needs, if source code is provided.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Hooks\Common;
 
@@ -35,27 +35,43 @@ use Espo\Core\Exceptions;
  */
 class Completeness extends Base
 {
-
     /**
-     * Before save action
+     * After save action
      *
      * @param Entity $entity
-     * @param array $options
+     * @param array  $options
      *
      * @return void
      */
-    public function beforeSave(Entity $entity, array $options = [])
+    public function afterSave(Entity $entity, array $options = [])
     {
-        $showException = true;
-        if (isset($options['showException']) && is_bool($options['showException'])) {
-            $showException = $options['showException'];
+        if ($this->hasCompleteness($entity->getEntityType())) {
+            $this->updateCompleteness($entity, $options);
         }
+    }
 
-        // update completeness
-        $entity = $this
+    /**
+     * @param Entity $entity
+     * @param array  $options
+     */
+    protected function updateCompleteness(Entity $entity, array $options): void
+    {
+        $this
             ->getContainer()
             ->get('serviceFactory')
             ->create('Completeness')
-            ->updateCompleteness($entity, $showException);
+            ->updateCompleteness($entity);
+    }
+
+    /**
+     * Is entity has completeness?
+     *
+     * @param string $entityName
+     *
+     * @return bool
+     */
+    protected function hasCompleteness(string $entityName): bool
+    {
+        return !empty($this->getMetadata()->get("scopes.$entityName.hasCompleteness"));
     }
 }
