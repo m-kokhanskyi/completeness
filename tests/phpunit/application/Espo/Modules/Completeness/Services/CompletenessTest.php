@@ -53,4 +53,16 @@ class CompletenessTest extends \PHPUnit\Framework\TestCase
         // test
         $this->assertTrue(method_exists($mock, 'recalcEntity'));
     }
+
+    /**
+     * Test is getChannelCompleteness method exists
+     */
+    public function testIsGetChannelCompletenessExists()
+    {
+        // create mock
+        $mock = $this->createPartialMock(Completeness::class, []);
+
+        // test
+        $this->assertTrue(method_exists($mock, 'getChannelCompleteness'));
+    }
 }

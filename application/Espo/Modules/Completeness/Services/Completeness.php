@@ -70,6 +70,54 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
+     * @param string $productId
+     *
+     * @return array
+     */
+    public function getChannelCompleteness(string $productId): array
+    {
+        // prepare result
+        $result = ['total' => 0, 'list' => []];
+
+        // get product
+        if (empty($product = $this->getProduct($productId))) {
+            return $result;
+        }
+
+        // get channels
+        if (empty($channels = $product->getChannels()) || count($channels) < 1) {
+            return $result;
+        };
+
+        // get requireds
+        if (empty($requireds = array_merge($this->getRequireds('Product'), $this->getRequiredsAttributes($product)))) {
+            return $result;
+        }
+
+        // prepare coefficient
+        $coefficient = 100 / count($requireds);
+
+        foreach ($channels as $channel) {
+            // prepare complete
+            $complete = 0;
+            foreach ($requireds as $field) {
+                if (!empty($product->get($field, ['channelId' => $channel->get('id')]))) {
+                    $complete += $coefficient;
+                }
+            }
+
+            $result['list'][] = [
+                'id'       => $channel->get('id'),
+                'name'     => $channel->get('name'),
+                'complete' => round($complete, 2)
+            ];
+        }
+        $result['total'] = count($result['list']);
+
+        return $result;
+    }
+
+    /**
      * Update completeness for any entity
      *
      * @param Entity $entity
@@ -317,12 +365,12 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * Get multilang types
+     * @param string $productId
      *
-     * @return array
+     * @return Entity|null
      */
-    protected function getMultilangTypes(): array
+    protected function getProduct(string $productId): ?Entity
     {
-        return array_keys($this->getConfig()->get('modules.multilangFields'));
+        return $this->getEntityManager()->getEntity('Product', $productId);
     }
 }
