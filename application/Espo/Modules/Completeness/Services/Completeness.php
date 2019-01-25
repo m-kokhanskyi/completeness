@@ -100,7 +100,8 @@ class Completeness extends \Treo\Services\AbstractService
             /**
              * For multilang fields
              */
-            if ($this->getConfig()->get('isMultilangActive') && !empty($multilangRequireds = $this->getRequireds($entityName, true))) {
+            if ($this->getConfig()->get('isMultilangActive')
+                && !empty($multilangRequireds = $this->getRequireds($entityName, true))) {
                 // prepare coefficient
                 $multilangCoefficient = 100 / count($multilangRequireds);
 
@@ -162,7 +163,10 @@ class Completeness extends \Treo\Services\AbstractService
              */
             if ($this->getConfig()->get('isMultilangActive')) {
                 // get requireds
-                $multilangRequireds = array_merge($this->getRequireds('Product', true), $this->getRequiredsAttributes($product, true));
+                $multilangRequireds = array_merge(
+                    $this->getRequireds('Product', true),
+                    $this->getRequiredsAttributes($product, true)
+                );
 
                 // prepare coefficient
                 $multilangCoefficient = 100 / count($multilangRequireds);
