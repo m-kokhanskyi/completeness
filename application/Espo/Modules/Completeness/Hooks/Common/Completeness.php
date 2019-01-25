@@ -68,6 +68,11 @@ class Completeness extends \Espo\Core\Hooks\Base
      */
     protected function hasCompleteness(string $entityName): bool
     {
+        // hack for Product
+        if ($entityName == 'ProductAttributeValue') {
+            $entityName = 'Product';
+        }
+
         return !empty($this->getMetadata()->get("scopes.$entityName.hasCompleteness"));
     }
 }

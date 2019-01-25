@@ -170,7 +170,14 @@ class Completeness extends \Treo\Services\AbstractService
                 foreach ($this->getLanguages() as $locale => $language) {
                     $multilangComplete = 0;
                     foreach ($multilangRequireds as $field) {
-                        if (!empty($product->get("{$field}{$language}", ['locale' => $locale]))) {
+                        // get value
+                        if (strpos($field, 'attr_') !== false) {
+                            $value = $product->get("{$field}", ['locale' => $locale]);
+                        } else {
+                            $value = $product->get("{$field}{$language}");
+                        }
+
+                        if (!empty($value)) {
                             $multilangComplete += $multilangCoefficient;
                         }
                     }
