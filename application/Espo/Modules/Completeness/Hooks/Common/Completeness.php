@@ -4,7 +4,7 @@
  * TreoPIM Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
- * This Software is the property of Zinit Solutions GmbH and is protected
+ * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
  * If not, see http://treopim.com/eula.
@@ -23,17 +23,14 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Hooks\Common;
 
-use Espo\Core\Utils\Util;
-use Espo\Core\Hooks\Base;
 use Espo\ORM\Entity;
-use Espo\Core\Exceptions;
 
 /**
- * Completeness hook
+ * Class Completeness
  *
- * @author r.ratsun <r.ratsun@zinitsolutions.com>
+ * @author r.ratsun@treolabs.com
  */
-class Completeness extends Base
+class Completeness extends \Espo\Core\Hooks\Base
 {
     /**
      * After save action
@@ -46,21 +43,20 @@ class Completeness extends Base
     public function afterSave(Entity $entity, array $options = [])
     {
         if ($this->hasCompleteness($entity->getEntityType())) {
-            $this->updateCompleteness($entity, $options);
+            $this->updateCompleteness($entity);
         }
     }
 
     /**
      * @param Entity $entity
-     * @param array  $options
      */
-    protected function updateCompleteness(Entity $entity, array $options): void
+    protected function updateCompleteness(Entity $entity): void
     {
         $this
             ->getContainer()
             ->get('serviceFactory')
             ->create('Completeness')
-            ->updateCompleteness($entity);
+            ->runUpdateCompleteness($entity);
     }
 
     /**

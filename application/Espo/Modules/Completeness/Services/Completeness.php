@@ -4,7 +4,7 @@
  * TreoPIM Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
- * This Software is the property of Zinit Solutions GmbH and is protected
+ * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
  * If not, see http://treopim.com/eula.
@@ -25,11 +25,12 @@ namespace Espo\Modules\Completeness\Services;
 
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
+use Espo\ORM\EntityCollection;
 
 /**
  * Completeness service
  *
- * @author r.ratsun <r.ratsun@zinitsolutions.com>
+ * @author r.ratsun <r.ratsun@treolabs.com>
  */
 class Completeness extends \Treo\Services\AbstractService
 {
@@ -40,7 +41,48 @@ class Completeness extends \Treo\Services\AbstractService
      *
      * @return Entity
      */
-    public function updateCompleteness(Entity $entity): Entity
+    public function runUpdateCompleteness(Entity $entity): Entity
+    {
+        switch ($entity->getEntityType()) {
+            case 'Product':
+                $entity = $this->runUpdateProductCompleteness($entity);
+                break;
+            default:
+                $entity = $this->runUpdateCommonCompleteness($entity);
+                break;
+        }
+
+        return $entity;
+    }
+
+    /**
+     * Recalc all completeness for entity instances
+     *
+     * @param string $entityName
+     *
+     * @return void
+     */
+    public function recalcEntity(string $entityName): void
+    {
+        if (!empty($entities = $this->find($entityName)) && count($entities) > 0) {
+            foreach ($entities as $entity) {
+                // update completeness
+                $entity = $this->runUpdateCompleteness($entity);
+
+                // force save entity
+                $this->saveEntity($entity);
+            }
+        }
+    }
+
+    /**
+     * Update completeness for any entity
+     *
+     * @param Entity $entity
+     *
+     * @return Entity
+     */
+    protected function runUpdateCommonCompleteness(Entity $entity): Entity
     {
         // get entity name
         $entityName = $entity->getEntityType();
@@ -49,7 +91,7 @@ class Completeness extends \Treo\Services\AbstractService
             // prepare coefficient
             $coefficient = 100 / count($requireds);
 
-            // prepare comlete
+            // prepare complete
             $complete = 0;
             foreach ($requireds as $field) {
                 if (!empty($entity->get($field))) {
@@ -69,15 +111,15 @@ class Completeness extends \Treo\Services\AbstractService
                     foreach ($this->getLanguages() as $language) {
                         $multilangComplete = 0;
                         foreach ($multilangRequireds as $field) {
-                            if (!empty($entity->get(Util::toCamelCase($field . '_' . strtolower($language))))) {
+                            if (!empty($entity->get("{$field}{$language}"))) {
                                 $multilangComplete += $multilangCoefficient;
                             }
                         }
-                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), $multilangComplete);
+                        $entity->set("complete{$language}", $multilangComplete);
                     }
                 } else {
                     foreach ($this->getLanguages() as $language) {
-                        $entity->set(Util::toCamelCase('complete_' . strtolower($language)), 100);
+                        $entity->set("complete{$language}", 100);
                     }
                 }
             }
@@ -92,31 +134,19 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * Recalc all completeness for entity instances
+     * Update completeness for Product entity
      *
-     * @param string $entityName
-     * @param bool   $force
+     * @param Entity $entity
      *
-     * @return void
+     * @return Entity
      */
-    public function recalcEntity(string $entityName, bool $force = false): void
+    protected function runUpdateProductCompleteness(Entity $entity): Entity
     {
-        if ($force) {
-            // reload entity manager
-            $this->reloadDependency('entityManager');
-        }
+        echo '<pre>';
+        print_r('123');
+        die();
 
-        // get entities
-        $entities = $this->getEntityManager()->getRepository($entityName)->find();
-        if (count($entities) > 0) {
-            foreach ($entities as $entity) {
-                // update completeness
-                $entity = $this->updateCompleteness($entity);
-
-                // save entity
-                $this->getEntityManager()->saveEntity($entity);
-            }
-        }
+        return $entity;
     }
 
     /**
@@ -160,9 +190,29 @@ class Completeness extends \Treo\Services\AbstractService
         $languages = [];
 
         if (!empty($this->getConfig()->get('isMultilangActive'))) {
-            $languages = $this->getConfig()->get('inputLanguageList');
+            foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
+                $languages[] = Util::toCamelCase(strtolower($locale), '_', true);
+            }
         }
 
         return $languages;
+    }
+
+    /**
+     * @param string $entityName
+     *
+     * @return EntityCollection
+     */
+    protected function find(string $entityName): EntityCollection
+    {
+        return $this->getEntityManager()->getRepository($entityName)->find();
+    }
+
+    /**
+     * @param Entity $entity
+     */
+    protected function saveEntity(Entity $entity): void
+    {
+        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
     }
 }

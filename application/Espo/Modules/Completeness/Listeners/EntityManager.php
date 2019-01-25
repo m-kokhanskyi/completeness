@@ -4,7 +4,7 @@
  * TreoPIM Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
- * This Software is the property of Zinit Solutions GmbH and is protected
+ * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
  * If not, see http://treopim.com/eula.
@@ -23,14 +23,12 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
-use Treo\Listeners\AbstractListener;
-
 /**
- * EntityManager listener
+ * Class EntityManager
  *
- * @author r.ratsun <r.ratsun@zinitsolutions.com>
+ * @author r.ratsun@treolabs.com
  */
-class EntityManager extends AbstractListener
+class EntityManager extends \Treo\Listeners\AbstractListener
 {
     /**
      * @param array $data
@@ -39,32 +37,42 @@ class EntityManager extends AbstractListener
      */
     public function beforeActionUpdateEntity(array $data): array
     {
+        // run recalc completeness if it needs
+        $this->recalcCompleteness($data);
+
+        return $data;
+    }
+
+    /**
+     * Run recalc completeness if it needs
+     *
+     * @param array $data
+     */
+    protected function recalcCompleteness(array $data): void
+    {
         // prepare data
-        $postData = get_object_vars($data['data']);
-        $scope = $postData['name'];
-        $hasCompleteness = !empty($postData['hasCompleteness']);
+        $scope = $data['data']->name;
+        $hasCompleteness = !empty($data['data']->hasCompleteness);
 
         if ($hasCompleteness !== $this->getHasCompleteness($scope)) {
             // update scope
             $this->setHasCompleteness($scope, $hasCompleteness);
 
             // rebuild DB
-            $this
-                ->getContainer()
-                ->get('dataManager')
-                ->rebuild();
+            $this->getContainer()->get('dataManager')->rebuild();
 
             if ($hasCompleteness) {
+                // reload entity manager
+                $this->getContainer()->reload('entityManager');
+
                 // recalc complete param
                 $this
                     ->getContainer()
                     ->get('serviceFactory')
                     ->create('Completeness')
-                    ->recalcEntity($scope, true);
+                    ->recalcEntity($scope);
             }
         }
-
-        return $data;
     }
 
     /**
