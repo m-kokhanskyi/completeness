@@ -43,6 +43,19 @@ class Metadata extends AbstractMetadata
      */
     public function modify(array $data): array
     {
+        // inject complete
+        $data = $this->addComplete($data);
+
+        return $data;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return array
+     */
+    protected function addComplete(array $data): array
+    {
         // get config
         $config = $this->getContainer()->get('config');
 
