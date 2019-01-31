@@ -28,7 +28,8 @@
         </div>
         {{else}}
         {{translate 'None'}}
-        {{/if}}</div>
+        {{/if}}
+    </div>
 {{/each}}
 </div>
 {{/if}}

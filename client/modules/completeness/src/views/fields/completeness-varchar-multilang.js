@@ -28,25 +28,6 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
         setup() {
             Dep.prototype.setup.call(this);
 
-            let inputLanguageList = this.getConfig().get('isMultilangActive') ? this.getConfig().get('inputLanguageList') : [];
-            this.langFieldNameList = Array.isArray(inputLanguageList) ? inputLanguageList.map(lang => this.getInputLangName(lang)) : [];
-
-            if (this.model.isNew() && this.defs.params && this.defs.params.default) {
-                let data = {};
-                this.langFieldNameList.forEach(name => data[name] = this.defs.params.default, this);
-                this.model.set(data);
-            }
-
-            this.events[`focusout [name="${this.name}"]`] = function (e) {
-                let mainField = $(e.currentTarget);
-                this.langFieldNameList.forEach(item => {
-                    let secondaryField = this.$el.find(`[name="${item}"]`);
-                    if (!secondaryField.val()) {
-                        secondaryField.val(mainField.val());
-                    }
-                });
-            }.bind(this);
-
             if (this.getPreferences().has('decimalMark')) {
                 this.decimalMark = this.getPreferences().get('decimalMark');
             } else {
@@ -59,7 +40,7 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
         data() {
             let data = Dep.prototype.data.call(this);
             data.value = Math.round(this.formatNumber(data.value) * 100) / 100;
-            data.valueList = this.langFieldNameList.map(name => {
+            data.valueList = this.langFieldNameList.map((name, i) => {
                 let value = Math.round(this.formatNumber(this.model.get(name)) * 100) / 100;
                 return {
                     name: name,
@@ -67,44 +48,24 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
                     isNotEmpty: value !== null && value !== '',
                     shortLang: name.slice(-4, -2).toLowerCase() + '_' + name.slice(-2).toUpperCase(),
                     customLabel: this.options.customLabel,
-                    index: this.langFieldNameList.indexOf(name)
+                    index: i
                 }
-            }, this);
+            });
             return data;
         },
 
-        afterRender: function() {
-            if(this.mode === 'list') {
-                if (this.el) {
-                    this.floatColor(parseFloat(this.$el.find('div.completeness.general')[0].innerText), this.$el.find('div.completeness.general'));
+        afterRender() {
+            if (this.mode === 'detail' || this.mode === 'list') {
+                if (parseFloat(this.model.get(this.name)) === 0) {
+                    this.$el.find('.completeness.general .progress-value').addClass('none');
                 }
             }
-            if(this.mode === 'detail') {
-                this.progressBarColor(parseFloat(this.$el.find('div.completeness.general')[0].innerText), this.$el.find('div.completeness.general .progress-bar'));
-                this.langFieldNameList.forEach(function (e, i) {
-                    this.progressBarColor(parseFloat(this.$el.find('.list-elem-' + i)[0].innerText), this.$el.find('.list-elem-' + i + ' .progress-bar'));
-                }, this);
-            }
-        },
-
-        floatColor: function (value, element) {
-            if(value === 100) {
-                element.addClass('green');
-            } else if (value === 0) {
-                element.addClass('red');
-            } else {
-                element.addClass('orange');
-            }
-        },
-
-        progressBarColor: function (value, element) {
-            if(value === 100) {
-                element.addClass('progress-bar-success');
-            } else if (value === 0) {
-                element.addClass('progress-bar-danger');
-                element.parent().siblings('.progress-value').addClass('none')
-            } else {
-                element.addClass('progress-bar-warning');
+            if (this.mode === 'detail') {
+                this.langFieldNameList.forEach((lang, i) => {
+                    if (parseFloat(this.model.get(lang)) === 0) {
+                        this.$el.find(`.completeness.list-elem-${i} .progress-value`).addClass('none');
+                    }
+                });
             }
         },
 
@@ -113,7 +74,7 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
                 return value;
             }
             if (value) {
-                var parts = value.toString().split(".");
+                let parts = value.toString().split(".");
                 parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousandSeparator);
                 return parts.join(this.decimalMark);
             }
