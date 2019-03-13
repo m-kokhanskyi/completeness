@@ -101,7 +101,12 @@ class Completeness extends \Treo\Services\AbstractService
             // prepare complete
             $complete = 0;
             foreach ($requireds as $field) {
-                if (!empty($product->get($field, ['channelId' => $channel->get('id')]))) {
+                // prepare field
+                if (strpos($field, 'attr_') !== false) {
+                    $field .= "_" . $channel->get('id');
+                }
+
+                if (!empty($product->get($field))) {
                     $complete += $coefficient;
                 }
             }
