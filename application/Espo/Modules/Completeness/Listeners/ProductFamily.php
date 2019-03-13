@@ -51,8 +51,8 @@ class ProductFamily extends \Treo\Listeners\AbstractListener
      */
     public function afterActionCreateLink(array $event): array
     {
-        if (!empty($event['params']->id)) {
-            $this->updateCompleteness((string)$event['params']->id);
+        if (!empty($event['params']['id'])) {
+            $this->updateCompleteness((string)$event['params']['id']);
         }
 
         return $event;
@@ -65,8 +65,8 @@ class ProductFamily extends \Treo\Listeners\AbstractListener
      */
     public function afterActionRemoveLink(array $event): array
     {
-        if (!empty($event['params']->id)) {
-            $this->updateCompleteness((string)$event['params']->id);
+        if (!empty($event['params']['id'])) {
+            $this->updateCompleteness((string)$event['params']['id']);
         }
 
         return $event;
