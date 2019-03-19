@@ -32,6 +32,38 @@ Espo.define('completeness:views/fields/base', 'class-replace!completeness:views/
                 }
             }
         },
+
+        validate: function () {
+            let validate = false;
+            if (this.name === "isActive") {
+                let inputLanguageList = this.getConfig().get('inputLanguageList') || [];
+                let langNameCompleteness = ['complete'];
+                if (Array.isArray(inputLanguageList) && inputLanguageList.length) {
+                    langNameCompleteness.push(...inputLanguageList.map(lang => 'complete' + lang.split('_').reduce((prev, curr) => prev + Espo.utils.upperCaseFirst(curr.toLowerCase()), '')));
+                }
+                validate = langNameCompleteness.some(_complete => parseInt(this.model.attributes[_complete]) < 100);
+            }
+            for (var i in this.validations) {
+                var method = 'validate' + Espo.Utils.upperCaseFirst(this.validations[i]);
+                if (this[method].call(this)) {
+                    this.trigger('invalid');
+                    validate =  true;
+                }
+            }
+            return validate;
+        },
+
+        afterNotValidate: function () {
+            if (this.name === "isActive" ) {
+                var msg = this.translate('fieldCompletenessShouldFill', 'messages');
+                this.notify(msg, 'error');
+                this.$element[0].checked = false;
+            } else {
+                this.notify('', 'error');
+            }
+            model.set(prev, {silent: true});
+            return;
+        },
     });
 });
 
