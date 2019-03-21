@@ -18,7 +18,7 @@
  * for your own needs, if source code is provided.
  */
 
-Espo.define('completeness:views/fields/base', 'views/fields/bool', function (Dep) {
+Espo.define('completeness:views/fields/is-active', 'views/fields/bool', function (Dep) {
 
     return Dep.extend({
 
