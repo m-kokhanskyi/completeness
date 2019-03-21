@@ -108,8 +108,11 @@ class Metadata extends AbstractMetadata
                         'default'                  => false,
                         'layoutFiltersDisabled'    => true,
                         'layoutMassUpdateDisabled' => true,
-                        'customizationDisabled'    => true
+                        'customizationDisabled'    => true,
+                        'view' => 'completenes:view/fields/is-active'
                     ];
+                } else {
+                    $data['entityDefs'][$entity]['fields']['isActive']['view'] = 'completenes:view/fields/is-active';
                 }
             }
         }
