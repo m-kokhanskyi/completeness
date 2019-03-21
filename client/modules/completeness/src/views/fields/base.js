@@ -33,37 +33,55 @@ Espo.define('completeness:views/fields/base', 'class-replace!completeness:views/
             }
         },
 
-        validate: function () {
-            let validate = false;
-            if (this.name === "isActive") {
-                let inputLanguageList = this.getConfig().get('inputLanguageList') || [];
-                let langNameCompleteness = ['complete'];
-                if (Array.isArray(inputLanguageList) && inputLanguageList.length) {
-                    langNameCompleteness.push(...inputLanguageList.map(lang => 'complete' + lang.split('_').reduce((prev, curr) => prev + Espo.utils.upperCaseFirst(curr.toLowerCase()), '')));
-                }
-                validate = langNameCompleteness.some(_complete => parseInt(this.model.attributes[_complete]) < 100);
-            }
-            for (var i in this.validations) {
-                var method = 'validate' + Espo.Utils.upperCaseFirst(this.validations[i]);
-                if (this[method].call(this)) {
-                    this.trigger('invalid');
-                    validate =  true;
-                }
-            }
-            return validate;
-        },
+        inlineEditSave: function () {
+            var data = this.fetch();
+            var self = this;
+            var model = this.model;
+            var prev = this.initialAttributes;
 
-        afterNotValidate: function () {
-            if (this.name === "isActive" ) {
-                var msg = this.translate('fieldCompletenessShouldFill', 'messages');
-                this.notify(msg, 'error');
-                this.$element[0].checked = false;
-            } else {
-                this.notify('', 'error');
+            model.set(data, {silent: true});
+            data = model.attributes;
+
+            var attrs = false;
+            for (var attr in data) {
+                if (_.isEqual(prev[attr], data[attr])) {
+                    continue;
+                }
+                (attrs || (attrs = {}))[attr] =    data[attr];
             }
-            model.set(prev, {silent: true});
-            return;
-        },
+
+            if (!attrs) {
+                this.inlineEditClose();
+                return;
+            }
+
+            if (this.validate()) {
+                this.notify('Not valid', 'error');
+                model.set(prev, {silent: true});
+                return;
+            }
+
+            this.notify('Saving...');
+            model.save(attrs, {
+                success: function () {
+                    self.trigger('after:save');
+                    model.trigger('after:save');
+                    if (self.model.hasChanged('isActive') && self.model.get('isActive') === 0) {
+                        let msg = self.translate('activationFailed', 'exceptions', 'Completeness');
+                        self.notify(msg, 'error');
+                    } else {
+                        self.notify('Saved', 'success');
+                    }
+                },
+                error: function () {
+                    self.notify('Error occured', 'error');
+                    model.set(prev, {silent: true});
+                    self.render()
+                },
+                patch: true
+            });
+            this.inlineEditClose(true);
+        }
     });
 });
 
