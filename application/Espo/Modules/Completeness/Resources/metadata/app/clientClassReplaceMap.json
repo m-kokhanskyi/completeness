@@ -3,6 +3,10 @@
         "__APPEND__",
         "completeness"
     ],
+    "views/record/detail": [
+        "__APPEND__",
+        "completeness"
+    ],
     "views/record/detail-side": [
         "__APPEND__",
         "completeness"
