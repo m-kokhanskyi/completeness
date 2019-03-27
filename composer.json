@@ -16,6 +16,11 @@
     },
     "description": {
       "default": "The module enables to control and improve the product data quality by measuring completeness of data."
-    }
+    },
+    "tags": [
+      "data",
+      "quality",
+      "control"
+    ]
   }
 }
