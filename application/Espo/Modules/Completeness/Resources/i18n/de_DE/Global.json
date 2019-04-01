@@ -1,7 +1,7 @@
 {
     "fields": {
         "complete": "Vollständigkeit",
-        "isActive": "Ist aktiv",
+        "isActive": "Aktiv",
         "completeEnGb": "Complete (EnGb)",
         "completeEnUs": "Complete (EnUs)",
         "completeEsMx": "Complete (EsMx)",
@@ -30,7 +30,7 @@
     },
     "dashlets": {
         "CompletenessOverview": "Vollständigkeit Übersicht",
-        "ChannelCompleteness": "Kanal Vollständigkeits",
-        "LocaleCompleteness": "Lokale Vollständigkeits"
+        "ChannelCompleteness": "Vollständigkeit der Kanäle",
+        "LocaleCompleteness": "Vollständigkeit der Lokale"
     }
 }
