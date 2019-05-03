@@ -85,7 +85,7 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         // get channels
-        if (empty($channels = $product->getChannels()) || count($channels) < 1) {
+        if (empty($channels = $product->get('channels')) || count($channels) < 1) {
             return $result;
         };
 

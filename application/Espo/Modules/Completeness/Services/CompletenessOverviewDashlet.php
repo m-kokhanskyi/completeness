@@ -101,10 +101,7 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         $result = [];
 
         // get products channel data
-        $data = $this
-            ->getEntityManager()
-            ->getRepository('Product')
-            ->getChannelsArray([]);
+        $data = $this->getProductChannelData();
 
         // get products completes
         $completes = $this
@@ -220,5 +217,28 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
     protected function getMetadata(): Metadata
     {
         return $this->getContainer()->get('metadata');
+    }
+
+    /**
+     * Get product channel data
+     *
+     * @return array
+     */
+    protected function getProductChannelData(): array
+    {
+        $sql = "
+            SELECT
+              channel.id AS channelId,
+              channel.name AS channelName,
+              pc.product_id AS productId
+            FROM product_channel pc
+            JOIN channel ON channel.id = pc.channel_id AND channel.deleted = 0
+            WHERE pc.deleted = 0
+        ";
+
+        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
+        $sth->execute();
+
+        return $sth->fetchAll(\PDO::FETCH_ASSOC);
     }
 }
