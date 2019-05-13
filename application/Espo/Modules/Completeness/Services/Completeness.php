@@ -101,11 +101,6 @@ class Completeness extends \Treo\Services\AbstractService
             // prepare complete
             $complete = 0;
             foreach ($requireds as $field) {
-                // prepare field
-                if (strpos($field, 'attr_') !== false) {
-                    $field .= "_" . $channel->get('id');
-                }
-
                 if (!empty($product->get($field))) {
                     $complete += $coefficient;
                 }
@@ -301,14 +296,14 @@ class Completeness extends \Treo\Services\AbstractService
             = "SELECT DISTINCT
                   a.id as attributeId
                FROM
-                  product_family_attribute_linker as pfal
-               JOIN attribute AS a ON a.id=pfal.attribute_id AND a.deleted=0
-               JOIN product_family AS pf ON pf.id=pfal.product_family_id AND pf.deleted=0
+                  product_family_attribute as pfa
+               JOIN attribute AS a ON a.id=pfa.attribute_id AND a.deleted=0
+               JOIN product_family AS pf ON pf.id=pfa.product_family_id AND pf.deleted=0
                JOIN product AS p ON p.product_family_id=pf.id AND p.deleted=0
                WHERE
-                     pfal.deleted = 0
+                     pfa.deleted = 0
                  AND p.id='" . $product->get('id') . "'
-                 AND pfal.is_required=1";
+                 AND pfa.is_required=1";
 
         if ($isMultilang) {
             // prepare multilang types
