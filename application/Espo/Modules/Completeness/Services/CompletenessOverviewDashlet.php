@@ -103,50 +103,45 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         // get products channel data
         $data = $this
             ->getEntityManager()
-            ->getRepository('Product')
-            ->getChannelsArray([]);
+            ->getRepository('Channel')
+            ->distinct()
+            ->join('products')
+            ->where([
+                'products.id!=' => null
+            ])
+            ->find();
 
-        // get products completes
-        $completes = $this
-            ->getEntityManager()
-            ->getRepository('Product')
-            ->select(array_merge(['id'], $completenessFields))
-            ->where(['id' => array_column($data, 'productId')])
-            ->find()
-            ->toArray();
+        if (count($data) > 0) {
+            // prepare channels
+            $channels = [];
+            foreach ($data as $row) {
+                $channels[$row->get('id')]['channelId'] = $row->get('id');
+                $channels[$row->get('id')]['channelName'] = $row->get('name');
+                $channels[$row->get('id')]['products'] = $row->get('products')->toArray();
+                foreach ($completenessFields as $key => $field) {
+                    if (!isset($channels[$row->get('id')][$key])) {
+                        $channels[$row->get('id')][$key] = 0;
+                    }
 
-        // prepare channels
-        $channels = [];
-        foreach ($data as $row) {
-            foreach ($completes as $v) {
-                if ($v['id'] == $row['productId']) {
-                    unset($v['id']);
-                    $row = array_merge($row, $v);
+                    foreach ($channels[$row->get('id')]['products'] as $product) {
+                        $channels[$row->get('id')][$key] += $product[$field];
+                    }
                 }
             }
-            $channels[$row['channelId']]['channelId'] = $row['channelId'];
-            $channels[$row['channelId']]['channelName'] = $row['channelName'];
-            $channels[$row['channelId']]['products'][] = $row;
-            foreach ($completenessFields as $key => $field) {
-                if (!isset($channels[$row['channelId']][$key])) {
-                    $channels[$row['channelId']][$key] = 0;
+
+            // prepare result
+            foreach ($channels as $row) {
+                $item = [
+                    'id' => $row['channelId'],
+                    'name' => $row['channelName'],
+                ];
+                foreach ($completenessFields as $key => $field) {
+                    $item[$key] = round(($row[$key] / count($row['products'])), 2);
                 }
-                $channels[$row['channelId']][$key] += $row[$field];
-            }
-        }
 
-        // prepare result
-        foreach ($channels as $row) {
-            $item = [
-                'id'   => $row['channelId'],
-                'name' => $row['channelName'],
-            ];
-            foreach ($completenessFields as $key => $field) {
-                $item[$key] = round(($row[$key] / count($row['products'])), 2);
+                // push
+                $result[] = $item;
             }
-
-            // push
-            $result[] = $item;
         }
 
         return $result;

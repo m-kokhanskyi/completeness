@@ -85,7 +85,7 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         // get channels
-        if (empty($channels = $product->getChannels()) || count($channels) < 1) {
+        if (empty($channels = $product->get('channels')) || count($channels) < 1) {
             return $result;
         };
 
@@ -101,11 +101,6 @@ class Completeness extends \Treo\Services\AbstractService
             // prepare complete
             $complete = 0;
             foreach ($requireds as $field) {
-                // prepare field
-                if (strpos($field, 'attr_') !== false) {
-                    $field .= "_" . $channel->get('id');
-                }
-
                 if (!empty($product->get($field))) {
                     $complete += $coefficient;
                 }
@@ -296,36 +291,29 @@ class Completeness extends \Treo\Services\AbstractService
      */
     protected function getRequiredsAttributes(Entity $product, bool $isMultilang = false): array
     {
-        // prepare SQL
-        $sql
-            = "SELECT DISTINCT
-                  a.id as attributeId
-               FROM
-                  product_family_attribute_linker as pfal
-               JOIN attribute AS a ON a.id=pfal.attribute_id AND a.deleted=0
-               JOIN product_family AS pf ON pf.id=pfal.product_family_id AND pf.deleted=0
-               JOIN product AS p ON p.product_family_id=pf.id AND p.deleted=0
-               WHERE
-                     pfal.deleted = 0
-                 AND p.id='" . $product->get('id') . "'
-                 AND pfal.is_required=1";
+        $where = [
+            'isRequired' => true,
+            'productAttributeValues.productId' => $product->get('id')
+        ];
 
         if ($isMultilang) {
-            // prepare multilang types
-            $multilangTypes = array_keys($this->getConfig()->get('modules.multilangFields'));
-
-            $sql .= " AND a.type IN ('" . implode("','", $multilangTypes) . "')";
+            $where['attribute.type'] = array_keys($this->getConfig()->get('modules.multilangFields'));
         }
 
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
-
-        $data = $sth->fetchAll(\PDO::FETCH_ASSOC);
+        $attributes = $this
+            ->getEntityManager()
+            ->getRepository('ProductFamilyAttribute')
+            ->distinct()
+            ->join(['productAttributeValues', 'attribute'])
+            ->select(['attributeId'])
+            ->where($where)
+            ->find()
+            ->toArray();
 
         // prepare result
         $result = [];
-        if (!empty($data)) {
-            foreach ($data as $row) {
+        if (count($attributes) > 0) {
+            foreach ($attributes as $row) {
                 $result[] = "attr_" . $row['attributeId'];
             }
         }
