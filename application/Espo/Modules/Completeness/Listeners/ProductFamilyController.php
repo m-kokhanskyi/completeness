@@ -23,53 +23,44 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
+use Treo\Listeners\AbstractListener;
+use Treo\Core\EventManager\Event;
+
 /**
- * Class ProductFamily
+ * Class ProductFamilyController
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class ProductFamily extends \Treo\Listeners\AbstractListener
+class ProductFamilyController extends AbstractListener
 {
     /**
-     * @param array $event
-     *
-     * @return array
+     * @param Event $event
      */
-    public function afterActionUpdateAttribute(array $event): array
+    public function afterActionUpdateAttribute(Event $event)
     {
-        if (!empty($event['data']->productFamilyId)) {
-            $this->updateCompleteness((string)$event['data']->productFamilyId);
+        if (!empty($event->getArgument('data')->productFamilyId)) {
+            $this->updateCompleteness((string)$event->getArgument('data')->productFamilyId);
         }
-
-        return $event;
     }
 
     /**
-     * @param array $event
-     *
-     * @return array
+     * @param Event $event
      */
-    public function afterActionCreateLink(array $event): array
+    public function afterActionCreateLink(Event $event)
     {
-        if (!empty($event['params']['id'])) {
-            $this->updateCompleteness((string)$event['params']['id']);
+        if (!empty($event->getArgument('params')['id'])) {
+            $this->updateCompleteness((string)$event->getArgument('params')['id']);
         }
-
-        return $event;
     }
 
     /**
-     * @param array $event
-     *
-     * @return array
+     * @param Event $event
      */
-    public function afterActionRemoveLink(array $event): array
+    public function afterActionRemoveLink(Event $event)
     {
-        if (!empty($event['params']['id'])) {
-            $this->updateCompleteness((string)$event['params']['id']);
+        if (!empty($event->getArgument('params')['id'])) {
+            $this->updateCompleteness((string)$event->getArgument('params')['id']);
         }
-
-        return $event;
     }
 
     /**
