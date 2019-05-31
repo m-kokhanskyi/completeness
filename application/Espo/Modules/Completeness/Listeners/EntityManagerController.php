@@ -23,24 +23,23 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
+use Treo\Listeners\AbstractListener;
+use Treo\Core\EventManager\Event;
+
 /**
- * Class EntityManager
+ * Class EntityManagerController
  *
  * @author r.ratsun@treolabs.com
  */
-class EntityManager extends \Treo\Listeners\AbstractListener
+class EntityManagerController extends AbstractListener
 {
     /**
-     * @param array $data
-     *
-     * @return array
+     * @param Event $event
      */
-    public function beforeActionUpdateEntity(array $data): array
+    public function beforeActionUpdateEntity(Event $event)
     {
         // run recalc completeness if it needs
-        $this->recalcCompleteness($data);
-
-        return $data;
+        $this->recalcCompleteness($event->getArguments());
     }
 
     /**

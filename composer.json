@@ -7,7 +7,7 @@
     }
   ],
   "require": {
-    "treolabs/treocore": "^3.12.0"
+    "treolabs/treocore": "^3.16.0"
   },
   "extra": {
     "treoId": "Completeness",
@@ -15,7 +15,7 @@
       "default": "Completeness"
     },
     "description": {
-      "default": "The module enables to control and improve the product data quality by measuring completeness of data."
+      "default": "The module enables control and improvement of the product data quality by measuring completeness of data."
     },
     "tags": [
       "data",

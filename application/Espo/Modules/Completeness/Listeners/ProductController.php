@@ -23,23 +23,24 @@ declare(strict_types=1);
 
 namespace Espo\Modules\Completeness\Listeners;
 
+use Treo\Listeners\AbstractListener;
+use Treo\Core\EventManager\Event;
+
 /**
- * Class Product
+ * Class ProductController
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Product extends \Treo\Listeners\AbstractListener
+class ProductController extends AbstractListener
 {
     /**
-     * @param array $data
-     *
-     * @return array
+     * @param Event $event
      */
-    public function afterActionRead(array $data): array
+    public function afterActionRead(Event $event)
     {
-        $data['result']->channelCompleteness = $this->getChannelCompleteness((string)$data['params']['id']);
-
-        return $data;
+        $result = $event->getArgument('result');
+        $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
+        $event->setArgument('result', $result);
     }
 
     /**
