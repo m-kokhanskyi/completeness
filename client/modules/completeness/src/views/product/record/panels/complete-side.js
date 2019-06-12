@@ -35,11 +35,11 @@ Espo.define('completeness:views/product/record/panels/complete-side', 'completen
                 this.createChannelsCompletenessView();
             });
 
-            this.listenTo(this.model, 'after:save after:attributesSave channelProductAttributeValuesChange', () => {
+            this.listenTo(this.model, 'after:save after:attributesSave', () => {
                 this.model.fetch().then(response => this.updateChannelCollection());
             });
             this.listenTo(this.model, 'after:relate after:unrelate', data => {
-                if (data === 'categories') {
+                if (data === 'channels') {
                     this.model.fetch().then(response => this.updateChannelCollection());
                 }
             });
