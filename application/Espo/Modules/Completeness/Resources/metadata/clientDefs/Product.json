@@ -1,11 +1,3 @@
 {
-  "relationshipPanels": {
-    "attributes": {
-      "setupPipes": [
-        "__APPEND__",
-        "completeness:views/product/pipes/remove-required-validation-in-attribute-panel"
-      ]
-    }
-  },
   "completenessPanelView": "completeness:views/product/record/panels/complete-side"
 }
