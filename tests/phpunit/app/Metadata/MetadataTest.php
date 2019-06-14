@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Metadata;
+namespace Completeness\Metadata;
 
 /**
  * Class MetadataTest

@@ -21,38 +21,35 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Listeners;
+namespace Completeness\Listeners;
+
+use Treo\Listeners\AbstractListener;
+use Treo\Core\EventManager\Event;
 
 /**
- * Class ProductTest
+ * Class ProductController
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class ProductTest extends \PHPUnit\Framework\TestCase
+class ProductController extends AbstractListener
 {
     /**
-     * Test for afterActionRead method
+     * @param Event $event
      */
-    public function testAfterActionReadMethod()
+    public function afterActionRead(Event $event)
     {
-        // create mock
-        $mock = $this->createPartialMock(Product::class, ['getChannelCompleteness']);
-        $mock
-            ->expects($this->any())
-            ->method('getChannelCompleteness')
-            ->willReturn([1]);
+        $result = $event->getArgument('result');
+        $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
+        $event->setArgument('result', $result);
+    }
 
-        $std = new \stdClass();
-        $std->channelCompleteness = null;
-
-        // get data
-        $data = $mock->afterActionRead(['result' => clone $std, 'params' => ['id' => '1']]);
-
-        // expected
-        $std->channelCompleteness = [1];
-
-        // test 1
-        $this->assertEquals(['result' => $std, 'params' => ['id' => '1']], $data);
-
+    /**
+     * @param string $productId
+     *
+     * @return array
+     */
+    protected function getChannelCompleteness(string $productId): array
+    {
+        return $this->getService('Completeness')->getChannelCompleteness($productId);
     }
 }

@@ -18,38 +18,23 @@
  * Software or its derivatives. You may modify the code of this Software
  * for your own needs, if source code is provided.
  */
-
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Listeners;
-
-use Treo\Listeners\AbstractListener;
-use Treo\Core\EventManager\Event;
+namespace Completeness\Hooks\Common;
 
 /**
- * Class ProductController
+ * Class CompletenessTest
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class ProductController extends AbstractListener
+class CompletenessTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * @param Event $event
+     * Test is afterSave method exists
      */
-    public function afterActionRead(Event $event)
+    public function testIsAfterSaveExists()
     {
-        $result = $event->getArgument('result');
-        $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
-        $event->setArgument('result', $result);
-    }
-
-    /**
-     * @param string $productId
-     *
-     * @return array
-     */
-    protected function getChannelCompleteness(string $productId): array
-    {
-        return $this->getService('Completeness')->getChannelCompleteness($productId);
+        // test
+        $this->assertTrue(method_exists($this->createPartialMock(Completeness::class, []), 'afterSave'));
     }
 }

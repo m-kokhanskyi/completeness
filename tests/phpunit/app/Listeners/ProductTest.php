@@ -18,23 +18,41 @@
  * Software or its derivatives. You may modify the code of this Software
  * for your own needs, if source code is provided.
  */
+
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Hooks\Common;
+namespace Completeness\Listeners;
 
 /**
- * Class CompletenessTest
+ * Class ProductTest
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class CompletenessTest extends \PHPUnit\Framework\TestCase
+class ProductTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * Test is afterSave method exists
+     * Test for afterActionRead method
      */
-    public function testIsAfterSaveExists()
+    public function testAfterActionReadMethod()
     {
-        // test
-        $this->assertTrue(method_exists($this->createPartialMock(Completeness::class, []), 'afterSave'));
+        // create mock
+        $mock = $this->createPartialMock(Product::class, ['getChannelCompleteness']);
+        $mock
+            ->expects($this->any())
+            ->method('getChannelCompleteness')
+            ->willReturn([1]);
+
+        $std = new \stdClass();
+        $std->channelCompleteness = null;
+
+        // get data
+        $data = $mock->afterActionRead(['result' => clone $std, 'params' => ['id' => '1']]);
+
+        // expected
+        $std->channelCompleteness = [1];
+
+        // test 1
+        $this->assertEquals(['result' => $std, 'params' => ['id' => '1']], $data);
+
     }
 }

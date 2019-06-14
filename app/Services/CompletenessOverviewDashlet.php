@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Services;
+namespace Completeness\Services;
 
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Metadata;
