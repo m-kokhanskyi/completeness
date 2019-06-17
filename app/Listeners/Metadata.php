@@ -21,32 +21,32 @@
 
 declare(strict_types=1);
 
-namespace Completeness\Metadata;
+namespace Completeness\Listeners;
 
 use Espo\Core\Utils\Util;
-use Treo\Metadata\AbstractMetadata;
+use Treo\Core\EventManager\Event;
+use Treo\Listeners\AbstractListener;
 
 /**
  * Metadata class
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Metadata extends AbstractMetadata
+class Metadata extends AbstractListener
 {
 
     /**
      * Modify
-     *
-     * @param array $data
-     *
-     * @return array
+
+     * @param Event $event
      */
-    public function modify(array $data): array
+    public function modify(Event $event): void
     {
+        // get data
+        $data = $event->getArgument('data');
         // inject complete
         $data = $this->addComplete($data);
-
-        return $data;
+        $event->setArgument('data', $data);
     }
 
     /**

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Completeness;
 
 use Treo\Core\ModuleManager\AbstractModule;
+
 /**
  * Class Module
  *
