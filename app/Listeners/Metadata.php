@@ -37,7 +37,7 @@ class Metadata extends AbstractListener
 
     /**
      * Modify
-
+     *
      * @param Event $event
      */
     public function modify(Event $event): void
