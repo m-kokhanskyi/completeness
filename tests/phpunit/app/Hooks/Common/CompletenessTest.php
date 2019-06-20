@@ -20,7 +20,7 @@
  */
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Hooks\Common;
+namespace Completeness\Hooks\Common;
 
 /**
  * Class CompletenessTest

@@ -1,12 +1,12 @@
 /*
  * Completeness
- * TreoPIM Premium Plugin
+ * Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
- * This Software is the property of Zinit Solutions GmbH and is protected
+ * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
- * If not, see http://treopim.com/eula.
+ * If not, see <http://treopim.com/eula>.
  *
  * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
  * Any unauthorised use of this Software without a valid license is

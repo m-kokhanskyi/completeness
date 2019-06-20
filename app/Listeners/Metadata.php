@@ -1,13 +1,13 @@
 <?php
 /**
  * Completeness
- * TreoPIM Premium Plugin
+ * Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
  * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
- * If not, see http://treopim.com/eula.
+ * If not, see <http://treopim.com/eula>.
  *
  * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
  * Any unauthorised use of this Software without a valid license is
@@ -21,32 +21,32 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Metadata;
+namespace Completeness\Listeners;
 
 use Espo\Core\Utils\Util;
-use Treo\Metadata\AbstractMetadata;
+use Treo\Core\EventManager\Event;
+use Treo\Listeners\AbstractListener;
 
 /**
  * Metadata class
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Metadata extends AbstractMetadata
+class Metadata extends AbstractListener
 {
 
     /**
      * Modify
      *
-     * @param array $data
-     *
-     * @return array
+     * @param Event $event
      */
-    public function modify(array $data): array
+    public function modify(Event $event): void
     {
+        // get data
+        $data = $event->getArgument('data');
         // inject complete
         $data = $this->addComplete($data);
-
-        return $data;
+        $event->setArgument('data', $data);
     }
 
     /**

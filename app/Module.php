@@ -1,13 +1,13 @@
 <?php
 /**
  * Completeness
- * TreoPIM Premium Plugin
+ * Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
  * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
- * If not, see http://treopim.com/eula.
+ * If not, see <http://treopim.com/eula>.
  *
  * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
  * Any unauthorised use of this Software without a valid license is
@@ -18,31 +18,24 @@
  * Software or its derivatives. You may modify the code of this Software
  * for your own needs, if source code is provided.
  */
-
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Listeners;
+namespace Completeness;
+
+use Treo\Core\ModuleManager\AbstractModule;
 
 /**
- * Class EntityManagerTest
+ * Class Module
  *
- * @author r.ratsun@treolabs.com
+ * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class EntityManagerTest extends \PHPUnit\Framework\TestCase
+class Module extends AbstractModule
 {
-
     /**
-     * Test for beforeActionUpdateEntity method
+     * @inheritdoc
      */
-    public function testBeforeActionUpdateEntityMethod()
+    public static function getLoadOrder(): int
     {
-        // create mock
-        $mock = $this->createPartialMock(EntityManager::class, ['recalcCompleteness']);
-
-        // test 1
-        $this->assertEquals([], $mock->beforeActionUpdateEntity([]));
-
-        // test 2
-        $this->assertEquals([1], $mock->beforeActionUpdateEntity([1]));
+        return 5115;
     }
 }

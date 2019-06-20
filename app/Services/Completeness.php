@@ -1,13 +1,13 @@
 <?php
 /**
  * Completeness
- * TreoPIM Premium Plugin
+ * Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
  * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
- * If not, see http://treopim.com/eula.
+ * If not, see <http://treopim.com/eula>.
  *
  * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
  * Any unauthorised use of this Software without a valid license is
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Services;
+namespace Completeness\Services;
 
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
@@ -70,10 +70,12 @@ class Completeness extends \Treo\Services\AbstractService
         }
     }
 
+
     /**
      * @param string $productId
      *
      * @return array
+     * @throws Error
      */
     public function getChannelCompleteness(string $productId): array
     {

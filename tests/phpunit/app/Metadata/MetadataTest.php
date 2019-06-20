@@ -21,35 +21,29 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Listeners;
-
-use Treo\Listeners\AbstractListener;
-use Treo\Core\EventManager\Event;
+namespace Completeness\Metadata;
 
 /**
- * Class ProductController
+ * Class MetadataTest
  *
- * @author r.ratsun <r.ratsun@treolabs.com>
+ * @author r.ratsun@treolabs.com
  */
-class ProductController extends AbstractListener
+class MetadataTest extends \PHPUnit\Framework\TestCase
 {
-    /**
-     * @param Event $event
-     */
-    public function afterActionRead(Event $event)
-    {
-        $result = $event->getArgument('result');
-        $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
-        $event->setArgument('result', $result);
-    }
 
     /**
-     * @param string $productId
-     *
-     * @return array
+     * Test for modify method
      */
-    protected function getChannelCompleteness(string $productId): array
+    public function testModifyMethod()
     {
-        return $this->getService('Completeness')->getChannelCompleteness($productId);
+        // create mock
+        $mock = $this->createPartialMock(Metadata::class, ['addComplete']);
+        $mock
+            ->expects($this->any())
+            ->method('addComplete')
+            ->willReturn([1]);
+
+        // test 1
+        $this->assertEquals([1], $mock->modify([]));
     }
 }

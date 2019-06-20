@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Listeners;
+namespace Completeness\Listeners;
 
 /**
  * Class ProductTest

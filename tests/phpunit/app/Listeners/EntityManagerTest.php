@@ -21,29 +21,28 @@
 
 declare(strict_types=1);
 
-namespace Espo\Modules\Completeness\Metadata;
+namespace Completeness\Listeners;
 
 /**
- * Class MetadataTest
+ * Class EntityManagerTest
  *
  * @author r.ratsun@treolabs.com
  */
-class MetadataTest extends \PHPUnit\Framework\TestCase
+class EntityManagerTest extends \PHPUnit\Framework\TestCase
 {
 
     /**
-     * Test for modify method
+     * Test for beforeActionUpdateEntity method
      */
-    public function testModifyMethod()
+    public function testBeforeActionUpdateEntityMethod()
     {
         // create mock
-        $mock = $this->createPartialMock(Metadata::class, ['addComplete']);
-        $mock
-            ->expects($this->any())
-            ->method('addComplete')
-            ->willReturn([1]);
+        $mock = $this->createPartialMock(EntityManager::class, ['recalcCompleteness']);
 
         // test 1
-        $this->assertEquals([1], $mock->modify([]));
+        $this->assertEquals([], $mock->beforeActionUpdateEntity([]));
+
+        // test 2
+        $this->assertEquals([1], $mock->beforeActionUpdateEntity([1]));
     }
 }
