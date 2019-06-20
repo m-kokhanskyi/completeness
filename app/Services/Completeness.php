@@ -73,7 +73,7 @@ class Completeness extends \Treo\Services\AbstractService
 
     /**
      * @param string $productId
-
+     *
      * @return array
      * @throws Error
      */
