@@ -127,10 +127,16 @@ class Completeness extends \Treo\Services\AbstractService
         // get entity name
         $entityName = $entity->getEntityType();
 
+        // prepare entity id
+        $entityId = $entity->get('id');
+
+        // prepare table name
+        $table = Util::camelCaseToUnderscore($entityName);
+
         // set complete
-        $entity->set('complete', 100);
-        foreach ($this->getLanguages() as $language) {
-            $entity->set("complete{$language}", 100);
+        $completeness['complete'] = 100;
+        foreach ($this->getLanguages() as $locale => $language) {
+            $completeness['complete_' . strtolower($locale)] = 100;
         }
 
         if (!empty($requireds = $this->getRequireds($entityName))) {
@@ -144,6 +150,7 @@ class Completeness extends \Treo\Services\AbstractService
                     $complete += $coefficient;
                 }
             }
+            $completeness['complete'] = $complete;
 
             /**
              * For multilang fields
@@ -153,25 +160,34 @@ class Completeness extends \Treo\Services\AbstractService
                 // prepare coefficient
                 $multilangCoefficient = 100 / count($multilangRequireds);
 
-                foreach ($this->getLanguages() as $language) {
+                foreach ($this->getLanguages() as $locale => $language) {
                     $multilangComplete = 0;
                     foreach ($multilangRequireds as $field) {
                         if (!empty($entity->get("{$field}{$language}"))) {
                             $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $entity->set("complete{$language}", $multilangComplete);
+                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
                 }
-            }
-
-            // checking activation
-            if (!empty($entity->get('isActive')) && $complete < 100) {
-                $entity->set('isActive', 0);
             }
         }
 
-        // force save entity
-        $this->saveEntity($entity);
+        // prepare sql
+        $sql = '';
+
+        // update activation
+        if (!empty($entity->get('isActive')) && $completeness['complete'] < 100) {
+            $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
+        }
+
+        // update db
+        foreach ($completeness as $field => $complete) {
+            $sql .= "UPDATE $table SET {$field}='" . round($complete) . "' WHERE id='{$entityId}';";
+        }
+
+        if (!empty($sql)) {
+            $this->execute($sql);
+        }
     }
 
     /**
@@ -184,10 +200,13 @@ class Completeness extends \Treo\Services\AbstractService
         // prepare product
         $product = ($entity->getEntityType() == 'Product') ? $entity : $entity->get('product');
 
+        // prepare productId
+        $productId = $product->get('id');
+
         // set complete
-        $product->set('complete', 100);
-        foreach ($this->getLanguages() as $language) {
-            $product->set("complete{$language}", 100);
+        $completeness['complete'] = 100;
+        foreach ($this->getLanguages() as $locale => $language) {
+            $completeness['complete_' . strtolower($locale)] = 100;
         }
 
         // get requireds
@@ -204,7 +223,7 @@ class Completeness extends \Treo\Services\AbstractService
                     $complete += $coefficient;
                 }
             }
-            $product->set('complete', $complete);
+            $completeness['complete'] = $complete;
 
             /**
              * For multilang fields
@@ -233,21 +252,27 @@ class Completeness extends \Treo\Services\AbstractService
                             $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $product->set("complete{$language}", $multilangComplete);
+                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
                 }
             }
         }
 
-        // set complete
-        $product->set('complete', $complete);
+        // prepare sql
+        $sql = '';
 
-        // checking activation
-        if (!empty($product->get('isActive')) && $complete < 100) {
-            $product->set('isActive', 0);
+        // update activation
+        if (!empty($product->get('isActive')) && $completeness['complete'] < 100) {
+            $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
         }
 
-        // force save product
-        $this->saveEntity($product);
+        // update db
+        foreach ($completeness as $field => $complete) {
+            $sql .= "UPDATE product SET {$field}='" . round($complete) . "' WHERE id='{$productId}';";
+        }
+
+        if (!empty($sql)) {
+            $this->execute($sql);
+        }
     }
 
     /**
@@ -350,14 +375,6 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * @param Entity $entity
-     */
-    protected function saveEntity(Entity $entity): void
-    {
-        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
-    }
-
-    /**
      * @param string $productId
      *
      * @return Entity|null
@@ -365,5 +382,14 @@ class Completeness extends \Treo\Services\AbstractService
     protected function getProduct(string $productId): ?Entity
     {
         return $this->getEntityManager()->getEntity('Product', $productId);
+    }
+
+    /**
+     * @param string $sql
+     */
+    private function execute(string $sql): void
+    {
+        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
+        $sth->execute();
     }
 }
