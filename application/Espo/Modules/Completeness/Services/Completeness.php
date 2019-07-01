@@ -135,8 +135,10 @@ class Completeness extends \Treo\Services\AbstractService
 
         // set complete
         $completeness['complete'] = 100;
+        $entity->set('complete', 100);
         foreach ($this->getLanguages() as $locale => $language) {
             $completeness['complete_' . strtolower($locale)] = 100;
+            $entity->set("complete{$language}", 100);
         }
 
         if (!empty($requireds = $this->getRequireds($entityName))) {
@@ -151,6 +153,7 @@ class Completeness extends \Treo\Services\AbstractService
                 }
             }
             $completeness['complete'] = $complete;
+            $entity->set('complete', $complete);
 
             /**
              * For multilang fields
@@ -168,6 +171,7 @@ class Completeness extends \Treo\Services\AbstractService
                         }
                     }
                     $completeness['complete_' . strtolower($locale)] = $multilangComplete;
+                    $entity->set("complete{$language}", $multilangComplete);
                 }
             }
         }
@@ -178,6 +182,7 @@ class Completeness extends \Treo\Services\AbstractService
         // update activation
         if (!empty($entity->get('isActive')) && $completeness['complete'] < 100) {
             $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
+            $entity->set("isActive", 0);
         }
 
         // update db
@@ -205,8 +210,10 @@ class Completeness extends \Treo\Services\AbstractService
 
         // set complete
         $completeness['complete'] = 100;
+        $entity->set('complete', 100);
         foreach ($this->getLanguages() as $locale => $language) {
             $completeness['complete_' . strtolower($locale)] = 100;
+            $entity->set("complete{$language}", 100);
         }
 
         // get requireds
@@ -224,6 +231,7 @@ class Completeness extends \Treo\Services\AbstractService
                 }
             }
             $completeness['complete'] = $complete;
+            $entity->set('complete', $complete);
 
             /**
              * For multilang fields
@@ -253,6 +261,7 @@ class Completeness extends \Treo\Services\AbstractService
                         }
                     }
                     $completeness['complete_' . strtolower($locale)] = $multilangComplete;
+                    $entity->set("complete{$language}", $multilangComplete);
                 }
             }
         }
@@ -263,6 +272,7 @@ class Completeness extends \Treo\Services\AbstractService
         // update activation
         if (!empty($product->get('isActive')) && $completeness['complete'] < 100) {
             $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
+            $entity->set("isActive", 0);
         }
 
         // update db
