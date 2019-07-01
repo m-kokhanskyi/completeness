@@ -291,24 +291,24 @@ class Completeness extends \Treo\Services\AbstractService
      */
     protected function getRequiredsAttributes(Entity $product, bool $isMultilang = false): array
     {
-        $where = [
-            'isRequired' => true,
-            'productAttributeValues.productId' => $product->get('id')
-        ];
-
+        // prepare sql
+        $sql = "SELECT DISTINCT pfa.attribute_id as attributeId
+                FROM product_family_attribute as pfa
+                JOIN product_attribute_value as pav 
+                  ON pav.product_family_attribute_id= pfa.id AND pav.deleted=0
+                JOIN attribute as a 
+                  ON a.id=pfa.attribute_id AND a.deleted=0
+                WHERE
+                    pfa.deleted=0
+                AND pfa.is_required=1
+                AND pav.product_id='" . $product->get('id') . "'";
         if ($isMultilang) {
-            $where['attribute.type'] = array_keys($this->getConfig()->get('modules.multilangFields'));
+            $sql .= " AND a.type IN ('varcharMultiLang','textMultiLang','enumMultiLang','multiEnumMultiLang','arrayMultiLang')";
         }
+        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
+        $sth->execute();
 
-        $attributes = $this
-            ->getEntityManager()
-            ->getRepository('ProductFamilyAttribute')
-            ->distinct()
-            ->join(['productAttributeValues', 'attribute'])
-            ->select(['attributeId'])
-            ->where($where)
-            ->find()
-            ->toArray();
+        $attributes = $sth->fetchAll(\PDO::FETCH_ASSOC);
 
         // prepare result
         $result = [];
