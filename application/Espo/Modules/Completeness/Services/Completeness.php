@@ -295,7 +295,7 @@ class Completeness extends \Treo\Services\AbstractService
         $sql = "SELECT DISTINCT pfa.attribute_id as attributeId
                 FROM product_family_attribute_linker as pfa
                 JOIN product_attribute_value as pav 
-                  ON pav.product_family_attribute_id= pfa.id AND pav.deleted=0
+                  ON pav.product_family_id= pfa.product_family_id AND pav.deleted=0
                 JOIN attribute as a 
                   ON a.id=pfa.attribute_id AND a.deleted=0
                 WHERE
