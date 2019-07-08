@@ -36,6 +36,17 @@ use Espo\Core\Exceptions\Error;
 class Completeness extends \Treo\Services\AbstractService
 {
     /**
+     * @var array
+     */
+    protected $multiLangFields = [
+        'varcharMultiLang',
+        'textMultiLang',
+        'enumMultiLang',
+        'multiEnumMultiLang',
+        'arrayMultiLang'
+    ];
+
+    /**
      * Update completeness
      *
      * @param Entity $entity
@@ -93,31 +104,34 @@ class Completeness extends \Treo\Services\AbstractService
         };
 
         // get requireds
-        if (empty($requireds = array_merge($this->getRequireds($product), $this->getRequiredsAttributes($product)))) {
+        if (empty($requireds
+            = array_merge($this->getRequireds('Product'), $this->getRequiredsScopeGlobalAttributes($productId)))) {
             return $result;
         }
 
         foreach ($channels as $channel) {
-            // get requireds for channel
-            $channelRequireds = array_merge(
-                $requireds, $this->getRequiredsScopeChannelAttributes($product, $channel->get('id'))
+            $channelRequired = array_merge(
+                $requireds,
+                $this->getRequiredsScopeChannelAttributes($productId, $channel->get('id'))
             );
 
             // prepare coefficient
-            $coefficient = 100 / count($channelRequireds);
+            $coefficient = 100 / count($channelRequired);
+
             // prepare complete
             $complete = 0;
-            foreach ($channelRequireds as $required) {
-                if (!empty($required)) {
+            foreach ($channelRequired as $field) {
+                if (!$this->isEmpty($product, $field)) {
                     $complete += $coefficient;
                 }
             }
 
             $result['list'][] = [
-                'id'       => $channel->get('id'),
-                'name'     => $channel->get('name'),
+                'id' => $channel->get('id'),
+                'name' => $channel->get('name'),
                 'complete' => round($complete, 2)
             ];
+
         }
         $result['total'] = count($result['list']);
 
@@ -131,54 +145,71 @@ class Completeness extends \Treo\Services\AbstractService
      */
     protected function runUpdateCommonCompleteness(Entity $entity): void
     {
-        // set complete
-        $entity->set('complete', 100);
-        foreach ($this->getLanguages() as $language) {
-            $entity->set("complete{$language}", 100);
+        // get entity name
+        $entityName = $entity->getEntityType();
+
+        // prepare entity id
+        $entityId = $entity->get('id');
+
+        // prepare table name
+        $table = Util::camelCaseToUnderscore($entity->getEntityName());
+
+        $completeness['complete'] = 100;
+
+        foreach ($this->getLanguages() as $locale => $language) {
+            $completeness['complete_' . strtolower($locale)] = 100;
         }
 
-        if (!empty($requireds = $this->getRequireds($entity))) {
+        if (!empty($requireds = $this->getRequireds($entityName))) {
             // prepare coefficient
             $coefficient = 100 / count($requireds);
 
             // prepare complete
             $complete = 0;
-            foreach ($requireds as $value) {
-                if ($value) {
+            foreach ($requireds as $field) {
+                if (!empty($entity->get($field))) {
                     $complete += $coefficient;
                 }
             }
+            $completeness['complete'] = $complete;
 
             /**
              * For multilang fields
              */
             if ($this->getConfig()->get('isMultilangActive')
-                && !empty($multilangRequireds = $this->getRequireds($entity, true))) {
-                foreach ($this->getLanguages() as $language) {
+                && !empty($multilangRequireds = $this->getRequireds($entityName, true))) {
+                // prepare coefficient
+                $multilangCoefficient = 100 / count($multilangRequireds);
+
+                foreach ($this->getLanguages() as $locale => $language) {
                     $multilangComplete = 0;
-
-                    if (isset($multilangRequireds[$language])) {
-                        // prepare coefficient
-                        $multilangCoefficient = 100 / count($multilangRequireds[$language]);
-
-                        foreach ($multilangRequireds[$language] as $value) {
-                            if (!empty($value)) {
-                                $multilangComplete += $multilangCoefficient;
-                            }
+                    foreach ($multilangRequireds as $field) {
+                        if (!empty($entity->get("{$field}{$language}"))) {
+                            $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $entity->set("complete{$language}", $multilangComplete);
+                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
                 }
             }
 
-            // checking activation
-            if (!empty($entity->get('isActive')) && $complete < 100) {
-                $entity->set('isActive', 0);
-            }
         }
 
-        // force save entity
-        $this->saveEntity($entity);
+        // prepare sql
+        $sql = '';
+
+        // update activation
+        if (!empty($entity->get('isActive')) && $completeness['complete'] < 100) {
+            $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
+        }
+
+        // update db
+        foreach ($completeness as $field => $complete) {
+            $sql .= "UPDATE $table SET {$field}='" . round($complete) . "' WHERE id='{$entityId}';";
+        }
+
+        if (!empty($sql)) {
+            $this->execute($sql);
+        }
     }
 
     /**
@@ -191,27 +222,31 @@ class Completeness extends \Treo\Services\AbstractService
         // prepare product
         $product = ($entity->getEntityType() == 'Product') ? $entity : $entity->get('product');
 
+        // prepare productId
+        $productId = (string)$product->get('id');
+
+        // prepare complete
+        $complete = 0;
+
         // set complete
-        $product->set('complete', 100);
-        foreach ($this->getLanguages() as $language) {
-            $product->set("complete{$language}", 100);
+        $completeness['complete'] = 100;
+        foreach ($this->getLanguages() as $locale => $language) {
+            $completeness['complete_' . strtolower($locale)] = 100;
         }
 
         // get requireds
-        $requireds = array_merge($this->getRequireds($product), $this->getRequiredsAttributes($product));
+        $requireds = array_merge($this->getRequireds('Product'), $this->getRequiredsAttributes($productId));
 
         if (!empty($requireds)) {
             // prepare coefficient
             $coefficient = 100 / count($requireds);
 
-            // prepare complete
-            $complete = 0;
-            foreach ($requireds as $value) {
-                if (!empty($value)) {
+            foreach ($requireds as $field) {
+                if (!$this->isEmpty($product, $field)) {
                     $complete += $coefficient;
                 }
             }
-            $product->set('complete', $complete);
+            $completeness['complete'] = $complete;
 
             /**
              * For multilang fields
@@ -219,65 +254,68 @@ class Completeness extends \Treo\Services\AbstractService
             if ($this->getConfig()->get('isMultilangActive')) {
                 // get requireds
                 $multilangRequireds = array_merge(
-                    $this->getRequireds($product, true),
-                    $this->getRequiredsAttributes($product, true)
+                    $this->getRequireds('Product', true),
+                    $this->getRequiredsAttributes($productId, true)
                 );
 
-                foreach ($this->getLanguages() as $language) {
+                // prepare coefficient
+                $multilangCoefficient = 100 / count($multilangRequireds);
+
+                foreach ($this->getLanguages() as $locale => $language) {
                     $multilangComplete = 0;
-
-                    if (isset($multilangRequireds[$language])) {
-                        // prepare coefficient
-                        $multilangCoefficient = 100 / count($multilangRequireds[$language]);
-
-                        foreach ($multilangRequireds[$language] as $value) {
-                            if (!empty($value)) {
-                                $multilangComplete += $multilangCoefficient;
-                            }
+                    foreach ($multilangRequireds as $field) {
+                        if (!$this->isEmpty($product, $field, $language)) {
+                            $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $product->set("complete{$language}", $multilangComplete);
+                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
                 }
             }
         }
 
-        // set complete
-        $product->set('complete', $complete);
+        // prepare sql
+        $sql = '';
 
-        // checking activation
-        if (!empty($product->get('isActive')) && $complete < 100) {
-            $product->set('isActive', 0);
+        // update activation
+        if (!empty($product->get('isActive')) && $completeness['complete'] < 100) {
+            $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
         }
 
-        // force save product
-        $this->saveEntity($product);
+        // update db
+        foreach ($completeness as $field => $complete) {
+            $sql .= "UPDATE product SET {$field}='" . round($complete) . "' WHERE id='{$productId}';";
+        }
+
+        if (!empty($sql)) {
+            $this->execute($sql);
+        }
     }
 
     /**
      * Get requireds
      *
-     * @param Entity $entity
+     * @param string $entityName
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequireds(Entity $entity, bool $isMultilang = false): array
+    protected function getRequireds(string $entityName, bool $isMultilang = false): array
     {
         // prepare result
         $result = [];
 
         // get entity defs
-        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs.' . $entity->getEntityName() . '.fields');
+        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs.' . $entityName . '.fields');
 
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
                 if (!empty($row['required']) && !empty($row['isMultilang'])) {
-                    foreach ($this->getLanguages() as $language) {
-                        $result[$language][] = $entity->get($name . $language);
-                    }
+                    $result[] = $name;
                 }
-            } elseif (!empty($row['required'])) {
-                $result[] = $entity->get($name);
+            } else {
+                if (!empty($row['required'])) {
+                    $result[] = $name;
+                }
             }
         }
 
@@ -285,24 +323,38 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * Get requireds attributes
-     *
-     * @param Entity $product
+     * @param string $productId
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequiredsAttributes(Entity $product, bool $isMultilang = false): array
+    protected function getRequiredsAttributes(string $productId, bool $isMultilang = false): array
+    {
+        return array_merge(
+            $this->getRequiredsScopeGlobalAttributes($productId, $isMultilang),
+            $this->getRequiredsScopeChannelAttributes($productId, null, $isMultilang)
+        );
+    }
+
+    /**
+     * Get required attributes
+     *
+     * @param string $productId
+     * @param bool $isMultilang
+     *
+     * @return array
+     */
+    protected function getRequiredsScopeGlobalAttributes(string $productId, bool $isMultilang = false): array
     {
         // prepare data
         $where = [
-            'productId' => $product->get('id'),
+            'productId' => $productId,
             'productFamilyAttribute.isRequired' => true,
             'productFamilyAttribute.scope' => 'Global'
         ];
 
         if ($isMultilang) {
-            $where['attribute.type'] = array_keys($this->getConfig()->get('modules.multilangFields'));
+            $where['attribute.type'] = $this->multiLangFields;
         }
 
         // get required scope Global attributes
@@ -319,13 +371,7 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                if ($isMultilang) {
-                    foreach ($this->getLanguages() as $language) {
-                        $result[$language][] = $attribute->get('value' . $language);
-                    }
-                } else {
-                    $result[] = $attribute->get('value');
-                }
+                $result[] = $attribute;
             }
         }
 
@@ -335,30 +381,29 @@ class Completeness extends \Treo\Services\AbstractService
     /**
      * Get required attributes with scope Channel
      *
-     * @param Entity $product
+     * @param string $productId
      * @param string|null $channelId
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequiredsScopeChannelAttributes(Entity $product, string $channelId = null, bool $isMultilang = false)
-    {
-        // prepare data
-        $joins = ['productFamilyAttribute', 'attribute'];
-
+    protected function getRequiredsScopeChannelAttributes(
+        string $productId,
+        string $channelId = null,
+        bool $isMultilang = false
+    ) {
         $where = [
-            'productId' => $product->get('id'),
+            'productId' => $productId,
             'productFamilyAttribute.isRequired' => true,
             'productFamilyAttribute.scope' => 'Channel'
         ];
 
         if (!empty($channelId)) {
-            $joins[] = 'channels';
             $where['channels.id'] = $channelId;
         }
 
         if ($isMultilang) {
-            $where['attribute.type'] = array_keys($this->getConfig()->get('modules.multilangFields'));
+            $where['attribute.type'] = $this->multiLangFields;
         }
 
         // get required scope Channel attributes
@@ -366,7 +411,7 @@ class Completeness extends \Treo\Services\AbstractService
             ->getEntityManager()
             ->getRepository('ProductAttributeValue')
             ->distinct()
-            ->join($joins)
+            ->join(['productFamilyAttribute', 'attribute', 'channels'])
             ->where($where)
             ->find();
 
@@ -375,13 +420,7 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                if ($isMultilang) {
-                    foreach ($this->getLanguages() as $language) {
-                        $result[$language][] = $attribute->get('value' . $language);
-                    }
-                } else {
-                    $result[] = $attribute->get('value');
-                }
+                $result[] = $attribute;
             }
         }
 
@@ -433,5 +472,33 @@ class Completeness extends \Treo\Services\AbstractService
     protected function getProduct(string $productId): ?Entity
     {
         return $this->getEntityManager()->getEntity('Product', $productId);
+    }
+
+    /**
+     * @param string $sql
+     */
+    private function execute(string $sql): void
+    {
+        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
+        $sth->execute();
+    }
+
+    /**
+     * @param Entity $entity
+     * @param mixed $value
+     * @param string $language
+     *
+     * @return bool
+     */
+    private function isEmpty(Entity $entity, $value, string $language = ''): bool
+    {
+        $result = true;
+
+        if ((is_string($value) && !empty($entity->get($value . $language)))
+            || ($value instanceof Entity && !empty($value->get('value' . $language)))) {
+            $result = false;
+        }
+
+        return $result;
     }
 }
