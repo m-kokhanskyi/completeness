@@ -18,49 +18,45 @@
  * Software or its derivatives. You may modify the code of this Software
  * for your own needs, if source code is provided.
  */
+
 declare(strict_types=1);
 
-namespace Completeness\Hooks\Common;
+namespace Completeness\Listeners;
 
-use Espo\ORM\Entity;
+use Treo\Listeners\AbstractListener;
+use Treo\Core\EventManager\Event;
+use Espo\Core\Exceptions\Error;
 
 /**
- * Class Completeness
+ * Class Controller
  *
- * @author r.ratsun@treolabs.com
+ * @author r.zablodskiy@treolabs.com
  */
-class Completeness extends \Espo\Core\Hooks\Base
+class Controller extends AbstractListener
 {
     /**
-     * After save action
+     * @param Event $event
      *
-     * @param Entity $entity
-     * @param array  $options
-     *
-     * @return void
+     * @throws Error
      */
-    public function afterSave(Entity $entity, array $options = [])
+    public function afterAction(Event $event)
     {
-        if ($this->hasCompleteness($entity->getEntityType())) {
-            $this->updateCompleteness($entity);
+        $data = $event->getArguments();
+
+        if ($this->hasCompleteness($data['controller'])) {
+            $entity = $this->getEntityManager()->getEntity($data['controller'], $data['params']['id']);
+
+            if (!empty($entity)) {
+                $this
+                    ->getContainer()
+                    ->get('serviceFactory')
+                    ->create('Completeness')
+                    ->runUpdateCompleteness($entity);
+            }
         }
     }
 
     /**
-     * @param Entity $entity
-     */
-    protected function updateCompleteness(Entity $entity): void
-    {
-        $this
-            ->getContainer()
-            ->get('serviceFactory')
-            ->create('Completeness')
-            ->runUpdateCompleteness($entity);
-    }
-
-    /**
-     * Is entity has completeness?
-     *
      * @param string $entityName
      *
      * @return bool
@@ -72,6 +68,6 @@ class Completeness extends \Espo\Core\Hooks\Base
             $entityName = 'Product';
         }
 
-        return !empty($this->getMetadata()->get("scopes.$entityName.hasCompleteness"));
+        return !empty($this->getContainer()->get('metadata')->get("scopes.$entityName.hasCompleteness"));
     }
 }

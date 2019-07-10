@@ -74,6 +74,7 @@ class Metadata extends AbstractListener
                     'readOnly'                 => true,
                     'default'                  => '0',
                     "trim"                     => true,
+                    'layoutDetailDisabled'     => true,
                     'layoutFiltersDisabled'    => true,
                     'layoutMassUpdateDisabled' => true,
                     'customizationDisabled'    => true,
