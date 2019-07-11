@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Completeness\Listeners;
 
+use Espo\Core\Exceptions\BadRequest;
+use Espo\Core\Exceptions\Error;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
 
@@ -41,6 +43,22 @@ class ProductController extends AbstractListener
         $result = $event->getArgument('result');
         $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
         $event->setArgument('result', $result);
+    }
+
+    /**
+     * @param Event $event
+     *
+     * @throws BadRequest
+     * @throws Error
+     */
+    public function beforeActionUpdate(Event $event)
+    {
+        $entity = $this->getEntityManager()->getEntity('Product', (string)$event->getArgument('params')['id']);
+        $data = $event->getArgument('data');
+
+        if (isset($data->isActive) && $data->isActive && $entity->get('complete') < 100) {
+            throw new BadRequest($this->getLanguage()->translate('activationFailed', 'exceptions', 'Completeness'));
+        }
     }
 
     /**

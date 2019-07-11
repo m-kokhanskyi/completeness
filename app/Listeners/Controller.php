@@ -43,8 +43,8 @@ class Controller extends AbstractListener
     {
         $data = $event->getArguments();
 
-        if ($this->hasCompleteness($data['controller'])) {
-            $entity = $this->getEntityManager()->getEntity($data['controller'], $data['params']['id']);
+        if ($this->hasCompleteness($data['controller']) && isset($data['result']->id)) {
+            $entity = $this->getEntityManager()->getEntity($data['controller'], $data['result']->id);
 
             if (!empty($entity)) {
                 $this
