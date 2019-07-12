@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
+use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityCollection;
@@ -494,9 +495,20 @@ class Completeness extends \Treo\Services\AbstractService
     {
         $result = true;
 
-        if ((is_string($value) && !empty($entity->get($value . $language)))
-            || ($value instanceof Entity && !empty($value->get('value' . $language)))) {
+        if ((is_string($value) && !empty($entity->get($value . $language)))) {
             $result = false;
+        } elseif ($value instanceof Entity) {
+            $type = $value->get('attribute')->get('type');
+
+            if (in_array($type, ['array', 'arrayMultiLang', 'multiEnum', 'multiEnumMultiLang'])) {
+                $attributeValue = Json::decode($value->get('value' . $language), true);
+            } else {
+                $attributeValue = $value->get('value' . $language);
+            }
+
+            if (!empty($attributeValue)) {
+                $result = false;
+            }
         }
 
         return $result;
