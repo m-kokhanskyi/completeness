@@ -44,7 +44,8 @@ class Completeness extends \Treo\Services\AbstractService
         'textMultiLang',
         'enumMultiLang',
         'multiEnumMultiLang',
-        'arrayMultiLang'
+        'arrayMultiLang',
+        'wysiwygMultiLang'
     ];
 
     /**
@@ -105,8 +106,7 @@ class Completeness extends \Treo\Services\AbstractService
         };
 
         // get requireds
-        if (empty($requireds
-            = array_merge($this->getRequireds('Product'), $this->getRequiredsScopeGlobalAttributes($productId)))) {
+        if (empty($requireds = $this->getRequireds('Product'))) {
             return $result;
         }
 
@@ -205,7 +205,7 @@ class Completeness extends \Treo\Services\AbstractService
 
         // update db
         foreach ($completeness as $field => $complete) {
-            $sql .= "UPDATE $table SET {$field}='" . round($complete) . "' WHERE id='{$entityId}';";
+            $sql .= "UPDATE $table SET {$field}='" . round($complete, 2) . "' WHERE id='{$entityId}';";
         }
 
         if (!empty($sql)) {
@@ -284,7 +284,7 @@ class Completeness extends \Treo\Services\AbstractService
 
         // update db
         foreach ($completeness as $field => $complete) {
-            $sql .= "UPDATE product SET {$field}='" . round($complete) . "' WHERE id='{$productId}';";
+            $sql .= "UPDATE product SET {$field}='" . round($complete, 2) . "' WHERE id='{$productId}';";
         }
 
         if (!empty($sql)) {
