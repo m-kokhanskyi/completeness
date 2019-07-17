@@ -80,6 +80,7 @@ class Metadata extends AbstractListener
                     'customizationDisabled'    => true,
                     'importDisabled'           => true,
                     'exportDisabled'           => true,
+                    'advancedFilterDisabled'   => true,
                     'isCompleteness'           => true
                 ];
 
@@ -98,6 +99,7 @@ class Metadata extends AbstractListener
                         'customizationDisabled'    => true,
                         'importDisabled'           => true,
                         'exportDisabled'           => true,
+                        'advancedFilterDisabled'   => true,
                         'isCompleteness'           => true
                     ];
                 }
