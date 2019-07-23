@@ -101,7 +101,7 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         // get channels
-        if (empty($channels = $product->get('channels')) || count($channels) < 1) {
+        if (empty($channels = $this->getChannels($product)) || count($channels) < 1) {
             return $result;
         };
 
@@ -124,6 +124,18 @@ class Completeness extends \Treo\Services\AbstractService
             foreach ($channelRequired as $field) {
                 if (!$this->isEmpty($product, $field)) {
                     $complete += $coefficient;
+                } elseif ($field instanceof Entity) {
+                    $attributes = $product->get('productAttributeValues');
+
+                    if (count($attributes) > 0) {
+                        foreach ($attributes as $attribute) {
+                            if ($attribute->get('attributeId') == $field->get('attributeId')
+                                && $attribute->get('scope') == 'Global' && !$this->isEmpty($product, $attribute)) {
+                                $complete += $coefficient;
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -236,7 +248,10 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         // get requireds
-        $requireds = array_merge($this->getRequireds('Product'), $this->getRequiredsAttributes($productId));
+        $requireds = array_merge(
+            $this->getRequireds('Product'),
+            $this->getRequiredsScopeGlobalAttributes($productId)
+        );
 
         if (!empty($requireds)) {
             // prepare coefficient
@@ -256,7 +271,7 @@ class Completeness extends \Treo\Services\AbstractService
                 // get requireds
                 $multilangRequireds = array_merge(
                     $this->getRequireds('Product', true),
-                    $this->getRequiredsAttributes($productId, true)
+                    $this->getRequiredsScopeGlobalAttributes($productId, true)
                 );
 
                 // prepare coefficient
@@ -509,6 +524,23 @@ class Completeness extends \Treo\Services\AbstractService
             if (!empty($attributeValue)) {
                 $result = false;
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Entity $product
+     *
+     * @return EntityCollection
+     */
+    protected function getChannels(Entity $product): EntityCollection
+    {
+        if ($product->get('type') == 'productVariant'
+            && !in_array('channels', $product->get('data')->customRelations)) {
+            $result = $product->get('configurableProduct')->get('channels');
+        } else {
+            $result = $product->get('channels');
         }
 
         return $result;
