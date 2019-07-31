@@ -365,7 +365,7 @@ class Completeness extends \Treo\Services\AbstractService
             }
         }
 
-        return array_values($result);
+        return $result;
     }
 
     /**
@@ -404,7 +404,7 @@ class Completeness extends \Treo\Services\AbstractService
             }
         }
 
-        return $result;
+        return array_values($result);
     }
 
     /**
