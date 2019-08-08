@@ -113,7 +113,7 @@ class Completeness extends \Treo\Services\AbstractService
         foreach ($channels as $channel) {
             $channelRequired = array_merge(
                 $requireds,
-                $this->getRequiredsScopeChannelAttributes($productId, $channel->get('id'))
+                $this->getRequiredsScopeChannelAttributes($product, $channel->get('id'))
             );
 
             // prepare coefficient
@@ -124,18 +124,6 @@ class Completeness extends \Treo\Services\AbstractService
             foreach ($channelRequired as $field) {
                 if (!$this->isEmpty($product, $field)) {
                     $complete += $coefficient;
-                } elseif ($field instanceof Entity) {
-                    $attributes = $product->get('productAttributeValues');
-
-                    if (count($attributes) > 0) {
-                        foreach ($attributes as $attribute) {
-                            if ($attribute->get('attributeId') == $field->get('attributeId')
-                                && $attribute->get('scope') == 'Global' && !$this->isEmpty($product, $attribute)) {
-                                $complete += $coefficient;
-                                break;
-                            }
-                        }
-                    }
                 }
             }
 
@@ -211,7 +199,7 @@ class Completeness extends \Treo\Services\AbstractService
         $sql = '';
 
         // update activation
-        if (!empty($entity->get('isActive')) && $completeness['complete'] < 100) {
+        if (!empty($entity->get('isActive')) && round($completeness['complete']) < 100) {
             $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
         }
 
@@ -293,7 +281,7 @@ class Completeness extends \Treo\Services\AbstractService
         $sql = '';
 
         // update activation
-        if (!empty($product->get('isActive')) && $completeness['complete'] < 100) {
+        if (!empty($product->get('isActive')) && round($completeness['complete']) < 100) {
             $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
         }
 
@@ -336,20 +324,6 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         return $result;
-    }
-
-    /**
-     * @param string $productId
-     * @param bool $isMultilang
-     *
-     * @return array
-     */
-    protected function getRequiredsAttributes(string $productId, bool $isMultilang = false): array
-    {
-        return array_merge(
-            $this->getRequiredsScopeGlobalAttributes($productId, $isMultilang),
-            $this->getRequiredsScopeChannelAttributes($productId, null, $isMultilang)
-        );
     }
 
     /**
@@ -397,38 +371,21 @@ class Completeness extends \Treo\Services\AbstractService
     /**
      * Get required attributes with scope Channel
      *
-     * @param string $productId
-     * @param string|null $channelId
-     * @param bool $isMultilang
+     * @param Entity $product
+     * @param string $channelId
      *
      * @return array
      */
-    protected function getRequiredsScopeChannelAttributes(
-        string $productId,
-        string $channelId = null,
-        bool $isMultilang = false
-    ) {
-        $where = [
-            'productId' => $productId,
-            'productFamilyAttribute.isRequired' => true,
-            'productFamilyAttribute.scope' => 'Channel'
-        ];
-
-        if (!empty($channelId)) {
-            $where['channels.id'] = $channelId;
-        }
-
-        if ($isMultilang) {
-            $where['attribute.type'] = $this->multiLangFields;
-        }
-
-        // get required scope Channel attributes
+    protected function getRequiredsScopeChannelAttributes(Entity $product, string $channelId) {
         $attributes = $this
             ->getEntityManager()
             ->getRepository('ProductAttributeValue')
             ->distinct()
-            ->join(['productFamilyAttribute', 'attribute', 'channels'])
-            ->where($where)
+            ->join(['productFamilyAttribute'])
+            ->where([
+                'productId' => $product->get('id'),
+                'productFamilyAttribute.isRequired' => true
+            ])
             ->find();
 
         // prepare result
@@ -436,11 +393,16 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                $result[] = $attribute;
+                if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
+                    $result[$attribute->get('attributeId')] = $attribute;
+                } elseif ($attribute->get('scope') == 'Channel'
+                    && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
+                    $result[$attribute->get('attributeId')] = $attribute;
+                }
             }
         }
 
-        return $result;
+        return array_values($result);
     }
 
     /**
