@@ -199,7 +199,7 @@ class Completeness extends \Treo\Services\AbstractService
         $sql = '';
 
         // update activation
-        if (!empty($entity->get('isActive')) && $completeness['complete'] < 100) {
+        if (!empty($entity->get('isActive')) && round($completeness['complete']) < 100) {
             $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
         }
 
@@ -281,7 +281,7 @@ class Completeness extends \Treo\Services\AbstractService
         $sql = '';
 
         // update activation
-        if (!empty($product->get('isActive')) && $completeness['complete'] < 100) {
+        if (!empty($product->get('isActive')) && round($completeness['complete']) < 100) {
             $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
         }
 
@@ -393,12 +393,10 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                if (isset($result[$attribute->get('attributeId')])) {
-                    if ($attribute->get('scope') == 'Channel'
-                        && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
-                        $result[$attribute->get('attributeId')] = $attribute;
-                    }
-                } else {
+                if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
+                    $result[$attribute->get('attributeId')] = $attribute;
+                } elseif ($attribute->get('scope') == 'Channel'
+                    && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
                     $result[$attribute->get('attributeId')] = $attribute;
                 }
             }
