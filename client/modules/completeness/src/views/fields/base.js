@@ -25,7 +25,8 @@ Espo.define('completeness:views/fields/base', 'class-replace!completeness:views/
         setup: function () {
             Dep.prototype.setup.call(this);
 
-            if(this.getMetadata().get('scopes.' + this.model.name + '.hasCompleteness')) {
+            if (this.getMetadata().get(['scopes', this.model.name, 'hasCompleteness'])
+                || this.getMetadata().get(['entityDefs', this.model.name, 'fields', this.name, 'hasCompleteValidation'])) {
                 this.validations = Espo.Utils.clone(this.validations);
                 if (this.validations.includes('required')) {
                     this.validations.splice(this.validations.indexOf('required'), 1);
