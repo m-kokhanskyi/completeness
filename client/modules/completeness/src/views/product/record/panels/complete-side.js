@@ -35,9 +35,10 @@ Espo.define('completeness:views/product/record/panels/complete-side', 'completen
                 this.createChannelsCompletenessView();
             });
 
-            this.listenTo(this.model, 'after:save after:attributesSave', () => {
+            this.listenTo(this.model, 'after:save after:attributesSave updateAttributes', () => {
                 this.model.fetch().then(response => this.updateChannelCollection());
             });
+
             this.listenTo(this.model, 'after:relate after:unrelate', data => {
                 if (data === 'channels') {
                     this.model.fetch().then(response => this.updateChannelCollection());
@@ -50,6 +51,7 @@ Espo.define('completeness:views/product/record/panels/complete-side', 'completen
             let data = this.model.get('channelCompleteness') || {};
             this.channelCollection.add(data.list || []);
             this.channelCollection.total = data.total || 0;
+            this.trigger('channelsCompletenessUpdated');
         },
 
         createChannelsCompletenessView() {
@@ -57,8 +59,13 @@ Espo.define('completeness:views/product/record/panels/complete-side', 'completen
                 collection: this.channelCollection,
                 el: `${this.options.el} .channels-completeness`
             }, view => {
-                // view.render();
+                view.listenTo(this, 'channelsCompletenessUpdated', () => view.reRender());
             });
+        },
+
+        actionRefresh() {
+            this.model.fetch().then(response => this.updateChannelCollection());
         }
+
     })
 );
