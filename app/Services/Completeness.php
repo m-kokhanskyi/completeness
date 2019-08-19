@@ -189,28 +189,23 @@ class Completeness extends \Treo\Services\AbstractService
                             $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
+                    $completeness['complete' . $language] = $multilangComplete;
                 }
             }
 
         }
 
-        // prepare sql
-        $sql = '';
-
         // update activation
         if (!empty($entity->get('isActive')) && round($completeness['complete']) < 100) {
-            $sql .= "UPDATE $table SET is_active=0 WHERE id='{$entityId}';";
+            $entity->set('isActive', 0);
         }
 
         // update db
         foreach ($completeness as $field => $complete) {
-            $sql .= "UPDATE $table SET {$field}='" . round($complete, 2) . "' WHERE id='{$entityId}';";
+            $entity->set($field, round($complete, 2));
         }
 
-        if (!empty($sql)) {
-            $this->execute($sql);
-        }
+        $this->getEntityManager()->saveEntity($entity);
     }
 
     /**
@@ -238,7 +233,7 @@ class Completeness extends \Treo\Services\AbstractService
         // get requireds
         $requireds = array_merge(
             $this->getRequireds('Product'),
-            $this->getRequiredsScopeGlobalAttributes($productId)
+            $this->getRequiredsScopeGlobalAttributes($product)
         );
 
         if (!empty($requireds)) {
@@ -259,7 +254,7 @@ class Completeness extends \Treo\Services\AbstractService
                 // get requireds
                 $multilangRequireds = array_merge(
                     $this->getRequireds('Product', true),
-                    $this->getRequiredsScopeGlobalAttributes($productId, true)
+                    $this->getRequiredsScopeGlobalAttributes($product, true)
                 );
 
                 // prepare coefficient
@@ -272,27 +267,22 @@ class Completeness extends \Treo\Services\AbstractService
                             $multilangComplete += $multilangCoefficient;
                         }
                     }
-                    $completeness['complete_' . strtolower($locale)] = $multilangComplete;
+                    $completeness['complete' . $language] = $multilangComplete;
                 }
             }
         }
 
-        // prepare sql
-        $sql = '';
-
         // update activation
         if (!empty($product->get('isActive')) && round($completeness['complete']) < 100) {
-            $sql .= "UPDATE product SET is_active=0 WHERE id='{$productId}';";
+            $entity->set('isActive', 0);
         }
 
         // update db
         foreach ($completeness as $field => $complete) {
-            $sql .= "UPDATE product SET {$field}='" . round($complete, 2) . "' WHERE id='{$productId}';";
+            $entity->set($field, round($complete, 2));
         }
 
-        if (!empty($sql)) {
-            $this->execute($sql);
-        }
+        $this->getEntityManager()->saveEntity($entity);
     }
 
     /**
@@ -329,16 +319,16 @@ class Completeness extends \Treo\Services\AbstractService
     /**
      * Get required attributes
      *
-     * @param string $productId
+     * @param Entity $product
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequiredsScopeGlobalAttributes(string $productId, bool $isMultilang = false): array
+    protected function getRequiredsScopeGlobalAttributes(Entity $product, bool $isMultilang = false): array
     {
         // prepare data
         $where = [
-            'productId' => $productId,
+            'productId' => $product->get('id'),
             'productFamilyAttribute.isRequired' => true,
             'productFamilyAttribute.scope' => 'Global'
         ];
@@ -361,7 +351,9 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                $result[] = $attribute;
+                if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
+                    $result[] = $attribute;
+                }
             }
         }
 
@@ -393,11 +385,13 @@ class Completeness extends \Treo\Services\AbstractService
 
         if (count($attributes) > 0) {
             foreach ($attributes as $attribute) {
-                if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
-                    $result[$attribute->get('attributeId')] = $attribute;
-                } elseif ($attribute->get('scope') == 'Channel'
-                    && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
-                    $result[$attribute->get('attributeId')] = $attribute;
+                if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
+                    if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
+                        $result[$attribute->get('attributeId')] = $attribute;
+                    } elseif ($attribute->get('scope') == 'Channel'
+                        && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
+                        $result[$attribute->get('attributeId')] = $attribute;
+                    }
                 }
             }
         }
@@ -503,6 +497,30 @@ class Completeness extends \Treo\Services\AbstractService
             $result = $product->get('configurableProduct')->get('channels');
         } else {
             $result = $product->get('channels');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Entity $product
+     *
+     * @return array
+     */
+    protected function getExcludedAttributes(Entity $product): array
+    {
+        $result = [];
+
+        if ($product->get('type') == 'configurableProduct') {
+            $variants = $product->get('productVariants');
+
+            if (count($variants) > 0) {
+                foreach ($variants as $variant) {
+                    $result = array_merge($result, array_column($variant->get('data')->attributes, 'id'));
+                }
+
+                $result = array_unique($result);
+            }
         }
 
         return $result;
