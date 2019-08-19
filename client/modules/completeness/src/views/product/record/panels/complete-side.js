@@ -29,10 +29,16 @@ Espo.define('completeness:views/product/record/panels/complete-side', 'completen
             Dep.prototype.setup.call(this);
 
             this.waitForView('channelsCompleteness');
-            this.getCollectionFactory().create(null, collection => {
-                this.channelCollection = collection;
-                this.updateChannelCollection();
-                this.createChannelsCompletenessView();
+            let promise = new Promise(resolve => resolve({}));
+            if (!this.model.has('channelCompleteness')) {
+                promise = this.model.fetch();
+            }
+            promise.then(response => {
+                this.getCollectionFactory().create(null, collection => {
+                    this.channelCollection = collection;
+                    this.updateChannelCollection();
+                    this.createChannelsCompletenessView();
+                });
             });
 
             this.listenTo(this.model, 'after:save after:attributesSave updateAttributes', () => {
