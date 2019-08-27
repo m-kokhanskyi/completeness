@@ -26,7 +26,7 @@ namespace Completeness\Services;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
-use Espo\Modules\Pim\Services\DashletInterface;
+use Pim\Services\DashletInterface;
 use Treo\Services\AbstractService;
 
 /**
