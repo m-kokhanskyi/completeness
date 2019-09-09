@@ -95,7 +95,7 @@ The following dashlets are available for display:
 - **Locale completeness** – completeness by locales separately and total, in the graphic form.
 - **Channel completeness** – completeness by channels separately and total, in the graphic form.
 
-To learn more about dashboards and dashlets, refer to the corresponding [article](https://treopim.com/help/user-interface) in the TreoPim user guide.
+To learn more about dashboards and dashlets, refer to the corresponding [article](https://treopim.com/help/user-interface) in the TreoPIP user guide.
 
 ***Get the "Completeness" module now to easily control and greatly improve the quality of your product data!***
 
