@@ -1,5 +1,3 @@
-# Completeness
-
 The "Completeness" module measures in percentage the completeness level of the required fields that allows you to control and improve the entity records data quality. In addition, it enables saving entity records, in which required fields are left empty. Please, consider that without the "Completeness" module installed and activated in your system, saving records without filling in all the required fields is not possible.
 
 Thanks to the [graphical representation](#completeness-dashlets), you have full control over the completeness of your entity records data in the system.
