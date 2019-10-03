@@ -37,16 +37,6 @@ class ProductController extends AbstractListener
 {
     /**
      * @param Event $event
-     */
-    public function afterActionRead(Event $event)
-    {
-        $result = $event->getArgument('result');
-        $result->channelCompleteness = $this->getChannelCompleteness((string)$event->getArgument('params')['id']);
-        $event->setArgument('result', $result);
-    }
-
-    /**
-     * @param Event $event
      *
      * @throws BadRequest
      * @throws Error
@@ -59,15 +49,5 @@ class ProductController extends AbstractListener
         if (isset($data->isActive) && $data->isActive && $entity->get('complete') < 100) {
             throw new BadRequest($this->getLanguage()->translate('activationFailed', 'exceptions', 'Completeness'));
         }
-    }
-
-    /**
-     * @param string $productId
-     *
-     * @return array
-     */
-    protected function getChannelCompleteness(string $productId): array
-    {
-        return $this->getService('Completeness')->getChannelCompleteness($productId);
     }
 }

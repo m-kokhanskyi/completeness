@@ -65,61 +65,79 @@ class Metadata extends AbstractListener
             $languages = [];
         }
 
+        $fieldsComplete = [
+            'complete',
+            'completeTotal',
+            'completeGlobal'
+        ];
+
         foreach ($data['entityDefs'] as $entity => $row) {
             if (!empty($data['scopes'][$entity]['hasCompleteness'])) {
-                // set complete
-                $data['entityDefs'][$entity]['fields']['complete'] = [
-                    'type'                     => 'varcharMultiLang',
-                    'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
-                    'readOnly'                 => true,
-                    'default'                  => '0',
-                    "trim"                     => true,
-                    'layoutDetailDisabled'     => true,
-                    'layoutFiltersDisabled'    => true,
-                    'layoutMassUpdateDisabled' => true,
-                    'customizationDisabled'    => true,
-                    'importDisabled'           => true,
-                    'exportDisabled'           => true,
-                    'advancedFilterDisabled'   => true,
-                    'isCompleteness'           => true
-                ];
-
+                //create main fields for complete
+                foreach ($fieldsComplete as $field) {
+                    $data['entityDefs'][$entity]['fields'][$field] = $this->getCompleteConfigField();
+                }
+                //create lang field for complete
                 foreach ($languages as $language) {
                     // prepare key
                     $key = Util::toCamelCase('complete_' . strtolower($language));
-
-                    $data['entityDefs'][$entity]['fields'][$key] = [
-                        'type'                     => 'varcharMultiLang',
-                        'view'                     => 'completeness:views/fields/completeness-varchar-multilang',
-                        'default'                  => '0',
-                        'layoutListDisabled'       => false,
-                        'layoutDetailDisabled'     => true,
-                        'layoutFiltersDisabled'    => true,
-                        'layoutMassUpdateDisabled' => true,
-                        'customizationDisabled'    => true,
-                        'importDisabled'           => true,
-                        'exportDisabled'           => true,
-                        'advancedFilterDisabled'   => true,
-                        'isCompleteness'           => true
-                    ];
+                    $data['entityDefs'][$entity]['fields'][$key] = $this->getCompleteConfigField();
                 }
 
                 // add active
                 if (!isset($data['entityDefs'][$entity]['fields']['isActive'])) {
                     $data['entityDefs'][$entity]['fields']['isActive'] = [
-                        'type'                     => 'bool',
-                        'default'                  => false,
-                        'layoutFiltersDisabled'    => true,
+                        'type' => 'bool',
+                        'default' => false,
+                        'layoutFiltersDisabled' => true,
                         'layoutMassUpdateDisabled' => true,
-                        'customizationDisabled'    => true,
+                        'customizationDisabled' => true,
                         'view' => 'completeness:views/fields/is-active'
                     ];
                 } else {
                     $data['entityDefs'][$entity]['fields']['isActive']['view'] = 'completeness:views/fields/is-active';
                 }
+                $data['entityDefs'][$entity]['fields']['channelCompleteness'] = $this->getMetaDataFieldChannelsData();
             }
         }
 
         return $data;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getMetaDataFieldChannelsData(): array
+    {
+        return [
+            'type' => 'jsonObject',
+            'layoutDetailDisabled' => true,
+            'layoutListDisabled' => true,
+            "importDisabled" => true,
+            'layoutDetailDisabled' => true,
+            'importDisabled' => true,
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    protected function getCompleteConfigField(): array
+    {
+        return [
+            'type' => 'varcharMultiLang',
+            'view' => 'completeness:views/fields/completeness-varchar-multilang',
+            'readOnly' => true,
+            'default' => '0',
+            "trim" => true,
+            'layoutDetailDisabled' => true,
+            'layoutFiltersDisabled' => true,
+            'layoutMassUpdateDisabled' => true,
+            'customizationDisabled' => true,
+            'importDisabled' => true,
+            'exportDisabled' => true,
+            'advancedFilterDisabled' => true,
+            'isCompleteness' => true
+        ];
     }
 }

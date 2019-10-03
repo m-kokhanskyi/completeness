@@ -27,15 +27,16 @@ use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityCollection;
-use Espo\Core\Exceptions\Error;
+use Treo\Services\AbstractService;
 
 /**
  * Completeness service
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Completeness extends \Treo\Services\AbstractService
+class Completeness extends AbstractService
 {
+    protected $allFieldsComplete = [];
     /**
      * @var array
      */
@@ -52,18 +53,22 @@ class Completeness extends \Treo\Services\AbstractService
      * Update completeness
      *
      * @param Entity $entity
+     *
+     * @return array
      */
-    public function runUpdateCompleteness(Entity $entity): void
+    public function runUpdateCompleteness(Entity $entity): array
     {
         switch ($entity->getEntityType()) {
             case 'Product':
             case 'ProductAttributeValue':
-                $this->runUpdateProductCompleteness($entity);
+            case 'ProductFamilyAttribute':
+                $result = $this->runUpdateProductCompleteness($entity);
                 break;
             default:
-                $this->runUpdateCommonCompleteness($entity);
+                $result = $this->runUpdateCommonCompleteness($entity);
                 break;
         }
+        return $result;
     }
 
     /**
@@ -85,215 +90,183 @@ class Completeness extends \Treo\Services\AbstractService
 
 
     /**
-     * @param string $productId
-     *
-     * @return array
-     * @throws Error
-     */
-    public function getChannelCompleteness(string $productId): array
-    {
-        // prepare result
-        $result = ['total' => 0, 'list' => []];
-
-        // get product
-        if (empty($product = $this->getProduct($productId))) {
-            return $result;
-        }
-
-        // get channels
-        if (empty($channels = $this->getChannels($product)) || count($channels) < 1) {
-            return $result;
-        };
-
-        // get requireds
-        if (empty($requireds = $this->getRequireds('Product'))) {
-            return $result;
-        }
-
-        foreach ($channels as $channel) {
-            $channelRequired = array_merge(
-                $requireds,
-                $this->getRequiredsScopeChannelAttributes($product, $channel->get('id'))
-            );
-
-            // prepare coefficient
-            $coefficient = 100 / count($channelRequired);
-
-            // prepare complete
-            $complete = 0;
-            foreach ($channelRequired as $field) {
-                if (!$this->isEmpty($product, $field)) {
-                    $complete += $coefficient;
-                }
-            }
-
-            $result['list'][] = [
-                'id' => $channel->get('id'),
-                'name' => $channel->get('name'),
-                'complete' => round($complete, 2)
-            ];
-
-        }
-        $result['total'] = count($result['list']);
-
-        return $result;
-    }
-
-    /**
      * Update completeness for any entity
      *
      * @param Entity $entity
+     *
+     * @return array
      */
-    protected function runUpdateCommonCompleteness(Entity $entity): void
+    protected function runUpdateCommonCompleteness(Entity $entity): array
     {
         // get entity name
         $entityName = $entity->getEntityType();
 
-        // prepare entity id
-        $entityId = $entity->get('id');
+        $requiredFields = $this->getRequiredFields($entityName);
 
-        // prepare table name
-        $table = Util::camelCaseToUnderscore($entity->getEntityName());
+        $completeness['complete'] = $this->calculationComplete($entity, $requiredFields);
 
-        $completeness['complete'] = 100;
+        $completeness =  array_merge($completeness, $this->calculationCompleteMultiLang($entity));
 
-        foreach ($this->getLanguages() as $locale => $language) {
-            $completeness['complete_' . strtolower($locale)] = 100;
-        }
+        $completeness['completeTotal'] = $this->calculationTotalComplete($entity);
 
-        if (!empty($requireds = $this->getRequireds($entityName))) {
-            // prepare coefficient
-            $coefficient = 100 / count($requireds);
+        $isActive = $this->updateActive($entity, $completeness['completeTotal']);
 
-            // prepare complete
-            $complete = 0;
-            foreach ($requireds as $field) {
-                if (!empty($entity->get($field))) {
-                    $complete += $coefficient;
-                }
-            }
-            $completeness['complete'] = $complete;
+        $this->setFieldCompleteInEntity($entity, $completeness);
 
-            /**
-             * For multilang fields
-             */
-            if ($this->getConfig()->get('isMultilangActive')
-                && !empty($multilangRequireds = $this->getRequireds($entityName, true))) {
-                // prepare coefficient
-                $multilangCoefficient = 100 / count($multilangRequireds);
+        $completeness['isActive'] = $isActive;
 
-                foreach ($this->getLanguages() as $locale => $language) {
-                    $multilangComplete = 0;
-                    foreach ($multilangRequireds as $field) {
-                        if (!empty($entity->get("{$field}{$language}"))) {
-                            $multilangComplete += $multilangCoefficient;
-                        }
-                    }
-                    $completeness['complete' . $language] = $multilangComplete;
-                }
-            }
-
-        }
-
-        // update activation
-        if (!empty($entity->get('isActive')) && round($completeness['complete']) < 100) {
-            $entity->set('isActive', 0);
-        }
-
-        // update db
-        foreach ($completeness as $field => $complete) {
-            $entity->set($field, round($complete, 2));
-        }
-
-        $this->getEntityManager()->saveEntity($entity);
+        return $completeness;
     }
 
     /**
      * Update completeness for Product entity
      *
      * @param Entity $entity
+     *
+     * @return array
      */
-    protected function runUpdateProductCompleteness(Entity $entity): void
+    protected function runUpdateProductCompleteness(Entity $entity): array
     {
-        // prepare product
         $product = ($entity->getEntityType() == 'Product') ? $entity : $entity->get('product');
 
-        // prepare productId
-        $productId = (string)$product->get('id');
+        $globalFieldsRequired = $this->getRequiredAttrGlobal($product);
+        $requiredFields = $this->getRequiredFields($entity->getEntityType());
 
-        // prepare complete
-        $complete = 0;
+        $channelCompleteness = $this->setChannelCompleteness($entity, $requiredFields);
 
-        // set complete
-        $completeness['complete'] = 100;
-        foreach ($this->getLanguages() as $locale => $language) {
-            $completeness['complete_' . strtolower($locale)] = 100;
-        }
+        $completeness['complete'] = $this
+            ->calculationComplete($product, array_merge($requiredFields, $globalFieldsRequired));
 
-        // get requireds
-        $requireds = array_merge(
-            $this->getRequireds('Product'),
-            $this->getRequiredsScopeGlobalAttributes($product)
-        );
+        $completeness['completeGlobal'] = $this->calculationCompleteGlobal($globalFieldsRequired, $product);
 
-        if (!empty($requireds)) {
-            // prepare coefficient
-            $coefficient = 100 / count($requireds);
+        $completeness = array_merge($completeness, $this->calculationCompleteMultiLang($product));
 
-            foreach ($requireds as $field) {
-                if (!$this->isEmpty($product, $field)) {
-                    $complete += $coefficient;
-                }
-            }
-            $completeness['complete'] = $complete;
+        $completeness['completeTotal'] = $this->calculationTotalComplete($product);
 
-            /**
-             * For multilang fields
-             */
-            if ($this->getConfig()->get('isMultilangActive')) {
-                // get requireds
-                $multilangRequireds = array_merge(
-                    $this->getRequireds('Product', true),
-                    $this->getRequiredsScopeGlobalAttributes($product, true)
-                );
+        $isActive = $this->updateActive($entity, $completeness['completeTotal']);
 
-                // prepare coefficient
-                $multilangCoefficient = 100 / count($multilangRequireds);
+        $this->setFieldCompleteInEntity($entity, $completeness);
 
-                foreach ($this->getLanguages() as $locale => $language) {
-                    $multilangComplete = 0;
-                    foreach ($multilangRequireds as $field) {
-                        if (!$this->isEmpty($product, $field, $language)) {
-                            $multilangComplete += $multilangCoefficient;
-                        }
-                    }
-                    $completeness['complete' . $language] = $multilangComplete;
-                }
-            }
-        }
+        $completeness['isActive'] = $isActive;
+        $completeness['channelCompleteness'] = $channelCompleteness;
 
-        // update activation
-        if (!empty($product->get('isActive')) && round($completeness['complete']) < 100) {
-            $entity->set('isActive', 0);
-        }
-
-        // update db
-        foreach ($completeness as $field => $complete) {
-            $entity->set($field, round($complete, 2));
-        }
-
-        $this->getEntityManager()->saveEntity($entity);
+        return $completeness;
     }
 
     /**
-     * Get requireds
+     * @param Entity $entity
+     * @param array $fields
+     *
+     * @return float
+     */
+    protected function calculationComplete(Entity $entity, array $fields): float
+    {
+        $complete = 100;
+
+        if (!empty($fields)) {
+            $this->allFieldsComplete = array_merge($this->allFieldsComplete, $fields);
+            $complete = 0;
+            $coefficient = 100 / count($fields);
+            foreach ($fields as $field) {
+                if (!$this->isEmpty($entity, $field)) {
+                    $complete += $coefficient;
+                }
+            }
+        }
+        return (float)$complete;
+    }
+
+    /**
+     * @param Entity $entity
+     *
+     * @return array
+     */
+    protected function calculationCompleteMultiLang(Entity $entity): array
+    {
+        $completenessLang = [];
+
+        if ($this->getConfig()->get('isMultilangActive')) {
+            if ($entity->getEntityType() == 'Product') {
+                $multiLangRequiredField = array_merge(
+                    $this->getRequiredFields($entity->getEntityName(), true),
+                    $this->getRequiredAttrGlobal($entity, true)
+                );
+            } else {
+                $multiLangRequiredField =  $this->getRequiredFields($entity->getEntityName(), true);
+            }
+
+            // prepare coefficient
+            $multilangCoefficient = 100 / count($multiLangRequiredField);
+
+            foreach ($this->getLanguages() as $locale => $language) {
+                $multilangComplete = 100;
+                if (!empty($multiLangRequiredField)) {
+                    $multilangComplete = 0;
+                    foreach ($multiLangRequiredField as $field) {
+                        if (!$this->isEmpty($entity, $field, $language)) {
+                            $this->allFieldsComplete[] = $field . $language;
+                            $multilangComplete += $multilangCoefficient;
+                        }
+                    }
+                }
+                $completenessLang['complete' . $language] = $multilangComplete;
+            }
+        }
+        return $completenessLang;
+    }
+
+    /**
+     * @param array $globalFieldsRequired
+     * @param Entity $product
+     *
+     * @return float
+     */
+    protected function calculationCompleteGlobal(array $globalFieldsRequired, Entity $product): float
+    {
+        $completeGlobal = 100;
+        if (!empty($globalFieldsRequired)) {
+            $coefficientGlobalFields = 100 / count($globalFieldsRequired);
+            $completeGlobal = 0;
+            foreach ($globalFieldsRequired as $field) {
+                if (!$this->isEmpty($product, $field)) {
+                    $completeGlobal += $coefficientGlobalFields;
+                }
+            }
+        }
+        return (float)$completeGlobal;
+    }
+
+    /**
+     * @param Entity $entity
+     *
+     * @return float
+     */
+    protected function calculationTotalComplete(Entity $entity): float
+    {
+        $totalComplete = 100;
+        $fields = $this->getAllFieldComplete();
+
+        if (!empty($fields)) {
+            $coefficient = 100 / count($fields);
+            $totalComplete = 0;
+            foreach ($fields as $field) {
+                if (!$this->isEmpty($entity, $field)) {
+                    $totalComplete += $coefficient;
+                }
+            }
+        }
+        return (float)round($totalComplete, 2);
+    }
+
+    /**
+     * Get required fields
      *
      * @param string $entityName
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequireds(string $entityName, bool $isMultilang = false): array
+    protected function getRequiredFields(string $entityName, bool $isMultilang = false): array
     {
         // prepare result
         $result = [];
@@ -317,14 +290,63 @@ class Completeness extends \Treo\Services\AbstractService
     }
 
     /**
-     * Get required attributes
+     * @param Entity $product
+     * @param array $requiredFields
+     *
+     * @return array
+     */
+    protected function setChannelCompleteness(Entity $product, array $requiredFields): array
+    {
+        $result = [];
+        // get channels
+        $channels = $this->getChannels($product);
+        if (empty($channels) || count($channels) < 1) {
+            $product->set('channelCompleteness', $result);
+        } else {
+            $channelCompleteness = [];
+
+            foreach ($channels as $channel) {
+                $requiredAttrChannels = $this->getRequiredAttrChannels($product, $channel->get('id'));
+
+                $this->allFieldsComplete = array_merge($this->allFieldsComplete, $requiredAttrChannels);
+
+                $channelRequired = array_merge(
+                    $requiredFields,
+                    $requiredAttrChannels
+                );
+
+                $coefficient = 100 / count($channelRequired);
+                $complete = !empty($channelRequired) ? 0 : 100;
+
+                foreach ($channelRequired as $field) {
+                    if (!$this->isEmpty($product, $field)) {
+                        $complete += $coefficient;
+                    }
+                }
+
+                $channelCompleteness[] = [
+                    'id' => $channel->get('id'),
+                    'name' => $channel->get('name'),
+                    'complete' => round($complete, 2)
+                ];
+            }
+            $result = ['total' => count($channelCompleteness), 'list' => $channelCompleteness];
+
+            $product->set('channelCompleteness', $result);
+        };
+
+        return $result;
+    }
+
+    /**
+     * Get required attributes Global
      *
      * @param Entity $product
      * @param bool $isMultilang
      *
      * @return array
      */
-    protected function getRequiredsScopeGlobalAttributes(Entity $product, bool $isMultilang = false): array
+    protected function getRequiredAttrGlobal(Entity $product, bool $isMultilang = false): array
     {
         // prepare data
         $where = [
@@ -350,6 +372,7 @@ class Completeness extends \Treo\Services\AbstractService
         $result = [];
 
         if (count($attributes) > 0) {
+            /** @var Entity $attribute */
             foreach ($attributes as $attribute) {
                 if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
                     $result[] = $attribute;
@@ -368,7 +391,8 @@ class Completeness extends \Treo\Services\AbstractService
      *
      * @return array
      */
-    protected function getRequiredsScopeChannelAttributes(Entity $product, string $channelId) {
+    protected function getRequiredAttrChannels(Entity $product, string $channelId)
+    {
         $attributes = $this
             ->getEntityManager()
             ->getRepository('ProductAttributeValue')
@@ -384,6 +408,7 @@ class Completeness extends \Treo\Services\AbstractService
         $result = [];
 
         if (count($attributes) > 0) {
+            /** @var Entity $attribute */
             foreach ($attributes as $attribute) {
                 if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
                     if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
@@ -429,34 +454,6 @@ class Completeness extends \Treo\Services\AbstractService
 
     /**
      * @param Entity $entity
-     */
-    protected function saveEntity(Entity $entity): void
-    {
-        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
-    }
-
-    /**
-     * @param string $productId
-     *
-     * @return Entity|null
-     * @throws Error
-     */
-    protected function getProduct(string $productId): ?Entity
-    {
-        return $this->getEntityManager()->getEntity('Product', $productId);
-    }
-
-    /**
-     * @param string $sql
-     */
-    private function execute(string $sql): void
-    {
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
-    }
-
-    /**
-     * @param Entity $entity
      * @param mixed $value
      * @param string $language
      *
@@ -466,7 +463,7 @@ class Completeness extends \Treo\Services\AbstractService
     {
         $result = true;
 
-        if ((is_string($value) && !empty($entity->get($value . $language)))) {
+        if (is_string($value) && !empty($entity->get($value . $language))) {
             $result = false;
         } elseif ($value instanceof Entity) {
             $type = $value->get('attribute')->get('type');
@@ -515,6 +512,7 @@ class Completeness extends \Treo\Services\AbstractService
             $variants = $product->get('productVariants');
 
             if (count($variants) > 0) {
+                /** @var Entity $variant */
                 foreach ($variants as $variant) {
                     $result = array_merge($result, array_column($variant->get('data')->attributes, 'id'));
                 }
@@ -524,5 +522,43 @@ class Completeness extends \Treo\Services\AbstractService
         }
 
         return $result;
+    }
+
+    /**
+     * @param Entity $entity
+     * @param $complete
+     *
+     * @return bool
+     */
+    protected function updateActive(Entity $entity, $complete): bool
+    {
+        $result = $entity->get('isActive');
+        if (!empty($result) && round($complete) < 100) {
+            $entity->set('isActive', 0);
+            $result = 0;
+        }
+        return !empty($result);
+    }
+
+    /**
+     * @param Entity $entity
+     * @param array $completeness
+     */
+    protected function setFieldCompleteInEntity(Entity $entity, array $completeness): void
+    {
+        // update db
+        foreach ($completeness as $field => $complete) {
+            $entity->set($field, (string)round($complete, 2));
+        }
+
+        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
+    }
+
+    /**
+     * @return array
+     */
+    protected function getAllFieldComplete(): array
+    {
+        return array_unique($this->allFieldsComplete);
     }
 }

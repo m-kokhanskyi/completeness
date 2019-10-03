@@ -78,9 +78,7 @@ class ProductFamilyController extends AbstractListener
         if (count($products) > 0) {
             foreach ($products as $product) {
                 $this
-                    ->getContainer()
-                    ->get('serviceFactory')
-                    ->create('Completeness')
+                    ->getService('Completeness')
                     ->runUpdateCompleteness($product);
             }
         }

@@ -23,7 +23,8 @@ declare(strict_types=1);
 
 namespace Completeness\Listeners;
 
-use Treo\Core\Utils\Util;
+use Espo\ORM\Entity as EntityOrm;
+use stdClass;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
 use Espo\Core\Exceptions\Error;
@@ -36,6 +37,7 @@ use Espo\ORM\Entity;
  */
 class Controller extends AbstractListener
 {
+
     /**
      * @param Event $event
      *
@@ -43,67 +45,66 @@ class Controller extends AbstractListener
      */
     public function afterAction(Event $event)
     {
-        $data = $event->getArguments();
-
-        if ($this->hasCompleteness($data['controller'])) {
-            if (isset($data['result']->id)) {
-                $entity = $this->getEntityManager()->getEntity($data['controller'], $data['result']->id);
-
-                if (!empty($entity)) {
-                    $data['result'] = $this->getUpdatedCompleteness($entity, $data['result']);
+        $args = $event->getArguments();
+        if ($this->hasCompleteness($args['controller'])) {
+            if ($args['action'] == 'afterActionUpdate' || $args['action'] == 'afterActionCreate') {
+                /** @var EntityOrm $entity */
+                $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
+                $args = $this->setCompletenessArgs($args, $entity);
+            } elseif (isset($args['result']->id)) {
+                if ($args['result']->complete === 0) {
+                    $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
+                    $args = $this->setCompletenessArgs($args, $entity);
                 }
-
-            } elseif (isset($data['result']['list'])) {
-                $list = $this
-                    ->getEntityManager()
-                    ->getRepository($data['controller'])
-                    ->where([
-                        'id' => array_column($data['result']['list'], 'id')
-                    ])
-                    ->find();
-
-                if (count($list) > 0) {
-                    foreach ($data['result']['list'] as $key => $item) {
-                        foreach ($list as $entity) {
-                            if ($entity->get('id') == $item->id) {
-                                $data['result']['list'][$key] = $this->getUpdatedCompleteness($entity, $item);
-                                break;
-                            }
-                        }
+            } elseif (isset($args['result']['list'])) {
+                foreach ($args['result']['list'] as $key => $item) {
+                    if ($item->complete === 0) {
+                        $entity = $this->getEntityManager()->getEntity($args['controller'], $item->id);
+                        $args['result']['list'][$key] = $this->setCompletenessItem($item, $entity);
                     }
-
                 }
             }
-
-            $event->setArgument('result', $data['result']);
+            $event->setArgument('result', $args['result']);
         }
     }
 
     /**
+     * @param array $args
      * @param Entity $entity
-     * @param \stdClass $result
      *
-     * @return \stdClass
+     * @return array
      */
-    protected function getUpdatedCompleteness(Entity $entity, \stdClass $result): \stdClass
+    protected function setCompletenessArgs(array $args, Entity $entity): array
     {
-        $this
-            ->getContainer()
-            ->get('serviceFactory')
-            ->create('Completeness')
+        $resultCompleteness = $this
+            ->getService('Completeness')
             ->runUpdateCompleteness($entity);
 
-        $result->complete = $entity->get('complete');
-
-        if (!empty($this->getConfig()->get('isMultilangActive'))) {
-            foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
-                $field = Util::toCamelCase('complete' . $locale);
-
-                $result->$field = $entity->get($field);
-            }
+        foreach ($resultCompleteness as $field => $value) {
+            $args['result']->{$field} = $value;
         }
 
-        return $result;
+        return $args;
+    }
+
+    /**
+     * @param stdClass $item
+     * @param Entity $entity
+     *
+     * @return stdClass
+     */
+    protected function setCompletenessItem(StdClass $item, Entity $entity): StdClass
+    {
+        $resultCompleteness = $this
+            ->getService('Completeness')
+            ->runUpdateCompleteness($entity);
+
+        foreach ($resultCompleteness as $field => $value) {
+            if (isset($item->{$field})) {
+                $item->{$field} = $value;
+            }
+        }
+        return $item;
     }
 
     /**
@@ -114,7 +115,7 @@ class Controller extends AbstractListener
     protected function hasCompleteness(string $entityName): bool
     {
         // hack for Product
-        if ($entityName == 'ProductAttributeValue') {
+        if ($entityName == ['ProductAttributeValue', 'ProductFamilyAttribute']) {
             $entityName = 'Product';
         }
 
