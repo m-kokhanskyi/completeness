@@ -184,7 +184,6 @@ class Completeness extends AbstractService
     protected function calculationCompleteMultiLang(Entity $entity): array
     {
         $completenessLang = [];
-
         if ($this->getConfig()->get('isMultilangActive')) {
             if ($entity->getEntityType() == 'Product') {
                 $multiLangRequiredField = array_merge(
@@ -195,7 +194,6 @@ class Completeness extends AbstractService
                 $multiLangRequiredField =  $this->getRequiredFields($entity->getEntityName(), true);
             }
 
-            // prepare coefficient
             $multilangCoefficient = 100 / count($multiLangRequiredField);
 
             foreach ($this->getLanguages() as $locale => $language) {
@@ -268,12 +266,8 @@ class Completeness extends AbstractService
      */
     protected function getRequiredFields(string $entityName, bool $isMultilang = false): array
     {
-        // prepare result
         $result = [];
-
-        // get entity defs
         $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs.' . $entityName . '.fields');
-
         foreach ($entityDefs as $name => $row) {
             if ($isMultilang) {
                 if (!empty($row['required']) && !empty($row['isMultilang'])) {
@@ -285,7 +279,6 @@ class Completeness extends AbstractService
                 }
             }
         }
-
         return $result;
     }
 
@@ -298,18 +291,14 @@ class Completeness extends AbstractService
     protected function setChannelCompleteness(Entity $product, array $requiredFields): array
     {
         $result = [];
-        // get channels
         $channels = $this->getChannels($product);
         if (empty($channels) || count($channels) < 1) {
             $product->set('channelCompleteness', $result);
         } else {
             $channelCompleteness = [];
-
             foreach ($channels as $channel) {
                 $requiredAttrChannels = $this->getRequiredAttrChannels($product, $channel->get('id'));
-
                 $this->allFieldsComplete = array_merge($this->allFieldsComplete, $requiredAttrChannels);
-
                 $channelRequired = array_merge(
                     $requiredFields,
                     $requiredAttrChannels
@@ -323,7 +312,6 @@ class Completeness extends AbstractService
                         $complete += $coefficient;
                     }
                 }
-
                 $channelCompleteness[] = [
                     'id' => $channel->get('id'),
                     'name' => $channel->get('name'),
@@ -331,10 +319,8 @@ class Completeness extends AbstractService
                 ];
             }
             $result = ['total' => count($channelCompleteness), 'list' => $channelCompleteness];
-
             $product->set('channelCompleteness', $result);
         };
-
         return $result;
     }
 
@@ -354,11 +340,9 @@ class Completeness extends AbstractService
             'productFamilyAttribute.isRequired' => true,
             'productFamilyAttribute.scope' => 'Global'
         ];
-
         if ($isMultilang) {
             $where['attribute.type'] = $this->multiLangFields;
         }
-
         // get required scope Global attributes
         $attributes = $this
             ->getEntityManager()
@@ -368,9 +352,7 @@ class Completeness extends AbstractService
             ->where($where)
             ->find();
 
-        // prepare result
         $result = [];
-
         if (count($attributes) > 0) {
             /** @var Entity $attribute */
             foreach ($attributes as $attribute) {
@@ -379,7 +361,6 @@ class Completeness extends AbstractService
                 }
             }
         }
-
         return $result;
     }
 
@@ -403,10 +384,8 @@ class Completeness extends AbstractService
                 'productFamilyAttribute.isRequired' => true
             ])
             ->find();
-
         // prepare result
         $result = [];
-
         if (count($attributes) > 0) {
             /** @var Entity $attribute */
             foreach ($attributes as $attribute) {
@@ -420,7 +399,6 @@ class Completeness extends AbstractService
                 }
             }
         }
-
         return array_values($result);
     }
 
@@ -432,13 +410,11 @@ class Completeness extends AbstractService
     protected function getLanguages(): array
     {
         $languages = [];
-
         if (!empty($this->getConfig()->get('isMultilangActive'))) {
             foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
                 $languages[$locale] = Util::toCamelCase(strtolower($locale), '_', true);
             }
         }
-
         return $languages;
     }
 
@@ -462,7 +438,6 @@ class Completeness extends AbstractService
     private function isEmpty(Entity $entity, $value, string $language = ''): bool
     {
         $result = true;
-
         if (is_string($value) && !empty($entity->get($value . $language))) {
             $result = false;
         } elseif ($value instanceof Entity) {
@@ -478,7 +453,6 @@ class Completeness extends AbstractService
                 $result = false;
             }
         }
-
         return $result;
     }
 
@@ -495,7 +469,6 @@ class Completeness extends AbstractService
         } else {
             $result = $product->get('channels');
         }
-
         return $result;
     }
 
@@ -507,20 +480,16 @@ class Completeness extends AbstractService
     protected function getExcludedAttributes(Entity $product): array
     {
         $result = [];
-
         if ($product->get('type') == 'configurableProduct') {
             $variants = $product->get('productVariants');
-
             if (count($variants) > 0) {
                 /** @var Entity $variant */
                 foreach ($variants as $variant) {
                     $result = array_merge($result, array_column($variant->get('data')->attributes, 'id'));
                 }
-
                 $result = array_unique($result);
             }
         }
-
         return $result;
     }
 

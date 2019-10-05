@@ -51,14 +51,14 @@ class Controller extends AbstractListener
                 /** @var EntityOrm $entity */
                 $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
                 $args = $this->setCompletenessArgs($args, $entity);
-            } elseif (isset($args['result']->id)) {
-                if ($args['result']->complete === 0) {
-                    $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
-                    $args = $this->setCompletenessArgs($args, $entity);
-                }
-            } elseif (isset($args['result']['list'])) {
+            } elseif ($args['result'] instanceof StdClass
+                        && isset($args['result']->completeTotal)
+                        && $args['result']->completeTotal == 0) {
+                $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
+                $args = $this->setCompletenessArgs($args, $entity);
+            } elseif (is_array($args['result']) && isset($args['result']['list'])) {
                 foreach ($args['result']['list'] as $key => $item) {
-                    if ($item->complete === 0) {
+                    if (isset($item->completeTotal) && $item->completeTotal == 0) {
                         $entity = $this->getEntityManager()->getEntity($args['controller'], $item->id);
                         $args['result']['list'][$key] = $this->setCompletenessItem($item, $entity);
                     }
