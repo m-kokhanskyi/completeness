@@ -46,6 +46,8 @@ class Metadata extends AbstractListener
         $data = $event->getArgument('data');
         // inject complete
         $data = $this->addComplete($data);
+        $data = $this->addDashlet($data);
+
         $event->setArgument('data', $data);
     }
 
@@ -139,5 +141,22 @@ class Metadata extends AbstractListener
             'advancedFilterDisabled' => true,
             'isCompleteness' => true
         ];
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    protected function addDashlet(array $data): array
+    {
+        if (!empty($data['completeness'])) {
+            foreach ($data['completeness'] as $key => $item) {
+                if (empty($data['dashlets'][$key]) && !empty($item['isDashlet'])) {
+                    $data['dashlets'][$key] = $item;
+                }
+            }
+        }
+
+        return $data;
     }
 }

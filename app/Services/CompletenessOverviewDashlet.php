@@ -26,7 +26,7 @@ namespace Completeness\Services;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
-use Pim\Services\DashletInterface;
+use Treo\Services\DashletInterface;
 use Treo\Services\AbstractService;
 
 /**
@@ -81,9 +81,13 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
 
         foreach ($fields as $fieldName => $fieldData) {
             if ($fieldData['isCompleteness'] ?? false) {
-                $result[$this->getLanguageKey($fieldName)] = $fieldName;
+                $key = $this->getLanguageKey($fieldName);
+                if (!empty($key)) {
+                    $result[$key] = $fieldName;
+                }
             }
         }
+        $result['default'] = 'completeTotal';
 
         return $result;
     }
@@ -143,7 +147,6 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
                 $result[] = $item;
             }
         }
-
         return $result;
     }
 
@@ -187,9 +190,9 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
      * @return string
      * @throws Error
      */
-    protected function getLanguageKey(string $fieldName): string
+    protected function getLanguageKey(string $fieldName): ?string
     {
-        $result = 'default';
+        $result = null;
 
         $inputLanguages = $this->getConfig()->get('inputLanguageList') ?? [];
 
