@@ -25,6 +25,7 @@ namespace Completeness\Services;
 
 use Espo\ORM\Entity;
 use Treo\Core\Container;
+
 /**
  * Interface CompletenessInterface
  * @package Completeness\Services

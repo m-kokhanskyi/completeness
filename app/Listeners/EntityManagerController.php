@@ -66,10 +66,8 @@ class EntityManagerController extends AbstractListener
 
                 // recalc complete param
                 $this
-                    ->getContainer()
-                    ->get('serviceFactory')
-                    ->create('Completeness')
-                    ->recalcEntity($scope);
+                    ->getService('Completeness')
+                    ->recalcEntities($scope);
             }
         }
     }

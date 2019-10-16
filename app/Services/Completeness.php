@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
+use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
-use Espo\ORM\EntityCollection;
-use Treo\Core\Container;
+use Treo\Core\Utils\Condition\Condition;
 use Treo\Services\AbstractService;
 
 /**
@@ -36,6 +36,7 @@ use Treo\Services\AbstractService;
  */
 class Completeness extends AbstractService
 {
+    const LIMIT = 10000;
     /**
      * @var Entity
      */
@@ -63,81 +64,109 @@ class Completeness extends AbstractService
      * @param Entity $entity
      *
      * @return array
+     * @throws Error
      */
     public function runUpdateCompleteness(Entity $entity): array
     {
-        $methodsCompleteness = $this
-            ->getContainer()
-            ->get('metadata')
-            ->get('completeness.Completeness.methodsCompleteness');
-
-        foreach ($methodsCompleteness as $method) {
+        $result = [];
+        foreach ($this->getMethodsCompleteness() as $method) {
             if (is_array($method['entities']) && in_array($entity->getEntityType(), $method['entities'])) {
-                $completeness =  new $method['service']();
-
+                $completeness = new $method['service']();
                 if ($completeness instanceof CompletenessInterface) {
                     $completeness->setContainer($this->getContainer());
                     $completeness->setEntity($entity);
                     $completeness->setLanguages($this->getLanguages());
-
-                    return $completeness->run($entity);
+                    $result = $completeness->run();
                 }
+                break;
             }
         }
-
-        $result = $this->runUpdateCommonCompleteness($entity);
-
+        if (empty($result)) {
+            $this->setEntity($entity);
+            $this->setLanguages($this->getLanguages());
+            $result = $this->runUpdateCommonCompleteness();
+        }
+        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
         return $result;
-    }
-
-    /**
-     * Update completeness for any entity
-     *
-     * @param Entity $entity
-     *
-     * @return array
-     */
-    protected function runUpdateCommonCompleteness(Entity $entity): array
-    {
-        $this->entity = $entity;
-        $this->languages = $this->getLanguages();
-
-        $this->prepareRequiredFields();
-
-        $completeness['complete'] = $this->calculationLocalComplete();
-        $completeness['multiLang'] =  $this->calculationCompleteMultiLang();
-        $completeness['completeTotal'] = $this->calculationTotalComplete();
-
-        $isActive = $this->updateActive($completeness['completeTotal']);
-        $this->setFieldsCompletenessInEntity($completeness);
-
-        $completeness['isActive'] = $isActive;
-
-        $this->getEntityManager()->saveEntity($this->entity, ['skipAll' => true]);
-
-        return $completeness;
     }
 
     /**
      * Recalc all completeness for entity instances
      *
      * @param string $entityName
+     * @param array $where
      *
      * @return void
+     * @throws Error
      */
-    public function recalcEntity(string $entityName): void
+    public function recalcEntities(string $entityName, array $where = []): void
     {
-        if (!empty($entities = $this->find($entityName)) && count($entities) > 0) {
-            foreach ($entities as $entity) {
-                // update completeness
-                $this->runUpdateCompleteness($entity);
+        $count = $this->getEntityManager()
+            ->getRepository($entityName)
+            ->where($where)
+            ->count();
+
+        if ($count > 0) {
+            $max = (int)$this->getConfig()->get('webMassUpdateMax', 200);
+            if ($max < 1) {
+                throw new Error('Invalid config option webMassUpdateMax');
+            }
+            for ($j = 0; $j <= $count; $j += self::LIMIT) {
+                $entities = $this->selectLimitById($entityName, self::LIMIT, $j, $where);
+                if (count($entities) > 0) {
+                    $chunks = array_chunk($entities, $max);
+                    foreach ($chunks as $chunk) {
+                        $name = 'Updated completeness for ' . $entityName;
+                        $this->qmPush(
+                            $name,
+                            'QueueManagerMassUpdateComplete',
+                            ['entitiesIds' => array_column($chunk, 'id'), 'entityName' => $entityName]
+                        );
+                    }
+                }
             }
         }
     }
 
+    /**
+     * @param string $entityName
+     *
+     * @return bool
+     */
+    public function hasCompleteness(string $entityName): bool
+    {
+        $entityName = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get('completeness.Completeness.' . $entityName, $entityName);
+
+        return !empty($this->getContainer()->get('metadata')->get("scopes.$entityName.hasCompleteness"));
+    }
+
+    /**
+     * Update completeness for any entity
+     *
+     * @return array
+     * @throws Error
+     */
+    protected function runUpdateCommonCompleteness(): array
+    {
+        $this->prepareRequiredFields();
+
+        $completeness['complete'] = $this->calculationLocalComplete();
+        $completeness = array_merge($completeness, $this->calculationCompleteMultiLang());
+        $completeness['completeTotal'] = $this->calculationTotalComplete();
+
+        $this->updateActive($completeness['complete']);
+        $this->setFieldsCompletenessInEntity($completeness);
+        $completeness['isActive'] = $this->entity->get('isActive');
+
+        return $completeness;
+    }
 
     /**
      * Prepare required fields and check on empty
+     * @throws Error
      */
     protected function prepareRequiredFields(): void
     {
@@ -147,25 +176,30 @@ class Completeness extends AbstractService
             ->get('entityDefs.' . $this->entity->getEntityType() . '.fields');
 
         foreach ($entityDefs as $name => $row) {
-            if (!empty($row['required']) && !empty($row['isMultilang'])) {
+            $isRequiredField = $this->isRequiredField($name, $row);
+            if ($isRequiredField && !empty($row['isMultilang'])) {
                 $isEmpty = $this->isEmpty($name);
+                $item = ['name' => $name, 'isEmpty' => $isEmpty];
 
-                $this->fieldsAndAttrs['fields'][] = ['name' => $name, 'isEmpty' => $isEmpty];
+                $this->fieldsAndAttrs['fields'][] = $item;
+                $this->fieldsAndAttrs['localComplete'][] = $item;
                 $this->fieldsForTotalComplete[] = $isEmpty;
 
                 foreach ($this->languages as $local => $language) {
                     $isEmpty = $this->isEmpty($name, $language);
+                    $item = ['name' => $name . $language, 'isEmpty' => $isEmpty, 'isMultiLang' => true];
 
                     $this->fieldsForTotalComplete[] = $isEmpty;
-                    $this->fieldsAndAttrs['multiLangFields'][$local][] = [
-                        'name' => $name . $language,
-                        'isEmpty' => $isEmpty
-                    ];
+                    $this->fieldsAndAttrs['fields'][] = $item;
+                    $this->fieldsAndAttrs['multiLang'][$local][] = $item;
                 }
-            } elseif (!empty($row['required']) ) {
+            } elseif ($isRequiredField) {
                 $isEmpty = $this->isEmpty($name);
+                $item = ['name' => $name, 'isEmpty' => $isEmpty];
+
                 $this->fieldsForTotalComplete[] = $isEmpty;
-                $this->fieldsAndAttrs['fields'][] = ['name' => $name, 'isEmpty' => $isEmpty];
+                $this->fieldsAndAttrs['localComplete'][] = $item;
+                $this->fieldsAndAttrs['fields'][] = $item;
             }
         }
     }
@@ -175,19 +209,7 @@ class Completeness extends AbstractService
      */
     protected function calculationLocalComplete(): float
     {
-        $complete = 100;
-
-        if (!empty($this->fieldsAndAttrs['fields'])) {
-            $complete = 0;
-            $coefficient = 100 / count($this->fieldsAndAttrs['fields']);
-
-            foreach ($this->fieldsAndAttrs['fields'] as $field) {
-                if (empty($field['isEmpty'])) {
-                    $complete += $coefficient;
-                }
-            }
-        }
-        return (float)round($complete, 2);
+        return $this->commonCalculationComplete($this->fieldsAndAttrs['localComplete']);
     }
 
     /**
@@ -198,21 +220,13 @@ class Completeness extends AbstractService
         $completenessLang = [];
         if ($this->getConfig()->get('isMultilangActive')) {
             foreach ($this->languages as $locale => $language) {
-                $multiLangComplete = 100;
-                if (!empty($this->fieldsAndAttrs['multiLangFields'][$locale])) {
-                    $coefficient = 100 / count($this->fieldsAndAttrs['multiLangFields'][$locale]);
-                    $multiLangComplete = 0;
-                    foreach ($this->fieldsAndAttrs['multiLangFields'][$locale] as $field) {
-                        if (empty($field['isEmpty'])) {
-                            $multiLangComplete += $coefficient;
-                        }
-                    }
-                }
-                $completenessLang['complete' . $language] = $multiLangComplete;
+                $completenessLang['complete' . $language] =
+                    $this->commonCalculationComplete($this->fieldsAndAttrs['multiLang'][$locale]);
             }
         }
         return $completenessLang;
     }
+
     /**
      * @return float
      */
@@ -249,17 +263,14 @@ class Completeness extends AbstractService
     }
 
     /**
-     * @param $totalComplete
-     * @return bool
+     * @param $complete
      */
-    protected function updateActive($totalComplete): bool
+    protected function updateActive($complete): void
     {
-        $result = $this->entity->get('isActive');
-        if (!empty($result) && round($totalComplete) < 100) {
+        $isActive = $this->entity->get('isActive');
+        if (!empty($isActive) && round($complete) < 100) {
             $this->entity->set('isActive', 0);
-            $result = 0;
         }
-        return !empty($result);
     }
 
     /**
@@ -267,9 +278,8 @@ class Completeness extends AbstractService
      */
     protected function setFieldsCompletenessInEntity(array $completeness): void
     {
-        // update db
         foreach ($completeness as $field => $complete) {
-            $this->entity->set($field, (string)round($complete, 2));
+            $this->entity->set($field, $complete);
         }
     }
 
@@ -292,10 +302,97 @@ class Completeness extends AbstractService
     /**
      * @param string $entityName
      *
-     * @return EntityCollection
+     * @param int $limit
+     * @param int $offset
+     * @param array $where
+     * @return array
      */
-    protected function find(string $entityName): EntityCollection
+    protected function selectLimitById(string $entityName, $limit = 2000, $offset = 0, array $where = []): array
     {
-        return $this->getEntityManager()->getRepository($entityName)->find();
+        return $entities = $this->getEntityManager()
+            ->getRepository($entityName)
+            ->select(['id'])
+            ->where($where)
+            ->limit($offset, $limit)
+            ->find()
+            ->toArray();
+    }
+
+    /**
+     * @param array $items
+     *
+     * @return float
+     */
+    protected function commonCalculationComplete(?array $items): float
+    {
+        $complete = 100;
+        if (!empty($items)) {
+            $complete = 0;
+            $coefficient = 100 / count($items);
+            foreach ($items as $item) {
+                if (empty($item['isEmpty'])) {
+                    $complete += $coefficient;
+                }
+            }
+        }
+        return (float)round($complete, 2);
+    }
+
+    /**
+     * @param $languages
+     */
+    public function setLanguages(array $languages): void
+    {
+        $this->languages = $languages;
+    }
+
+    /**
+     * @param Entity $entity
+     */
+    public function setEntity(Entity $entity): void
+    {
+        $this->entity = $entity;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getMethodsCompleteness(): array
+    {
+        return $this
+            ->getContainer()
+            ->get('metadata')
+            ->get('completeness.Completeness.methodsCompleteness', []);
+    }
+
+    /**
+     * @param string $field
+     * @param array $row
+     * @return bool
+     * @throws Error
+     */
+    protected function isRequiredField(string $field, array $row): bool
+    {
+        $condition = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get("clientDefs.{$this->entity->getEntityName()}.dynamicLogic.fields.$field.required.conditionGroup", []);
+        return !empty($row['required'])
+                || (!empty($condition) && Condition::isCheck(Condition::prepare($this->entity, $condition)));
+    }
+
+    /**
+     * @param string $name
+     * @param string $serviceName
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function qmPush(string $name, string $serviceName, array $data): bool
+    {
+        return $this
+            ->getContainer()
+            ->get('queueManager')
+            ->push($name, $serviceName, $data);
     }
 }

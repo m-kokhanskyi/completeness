@@ -23,55 +23,50 @@ declare(strict_types=1);
 
 namespace Completeness\Listeners;
 
-use Espo\Core\Exceptions\BadRequest;
+use Pim\Entities\ProductFamilyAttribute;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
-use Espo\Core\Exceptions\Error;
-use Espo\ORM\Entity;
 
 /**
- * Class Controller
+ * Class ProductFamilyController
  *
- * @author r.zablodskiy@treolabs.com
+ * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Controller extends AbstractListener
+class ProductFamilyEntity extends AbstractListener
 {
 
     /**
      * @param Event $event
-     *
-     * @throws Error
      */
-    public function afterAction(Event $event)
+    public function afterUnrelate(Event $event)
     {
-        $args = $event->getArguments();
-        if ($this->hasCompleteness($args['controller'])) {
-            if ($args['action'] == 'afterActionUpdate' || $args['action'] == 'afterActionCreate') {
-                /** @var Entity $entity */
-                $entity = $this->getEntityManager()->getEntity($args['controller'], $args['result']->id);
-                $args = $this->setCompletenessArgs($args, $entity);
-            }
-            $event->setArgument('result', $args['result']);
+        $entity = $event->getArgument('entity');
+        $foreign = $event->getArgument('foreign');
+        if ($foreign instanceof ProductFamilyAttribute && !empty($foreign->get('isRequired'))) {
+            $this->updateCompletenessProduct((string)$entity->get('id'));
         }
     }
 
     /**
-     * @param array $args
-     * @param Entity $entity
+     * @param string $productFamilyId
+     */
+    public function updateCompletenessProduct(string $productFamilyId): void
+    {
+        if ($this->hasCompleteness('Product')) {
+            $typesProduct = $this->getProductTypes();
+            $this
+                ->getService('Completeness')
+                ->recalcEntities('Product', ['productFamilyId' => $productFamilyId, 'type' => $typesProduct]);
+        }
+    }
+    /**
+     * Get product types
      *
      * @return array
      */
-    protected function setCompletenessArgs(array $args, Entity $entity): array
+    protected function getProductTypes(): array
     {
-        $resultCompleteness = $this
-            ->getService('Completeness')
-            ->runUpdateCompleteness($entity);
-
-        foreach ($resultCompleteness as $field => $value) {
-            $args['result']->{$field} = $value;
-        }
-
-        return $args;
+        return array_keys($this->getContainer()->get('metadata')->get('pim.productType'));
     }
 
     /**
