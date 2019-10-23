@@ -16,7 +16,7 @@
         <div class="multilang-labels hidden" data-id="{{id}}">
             {{#each langs}}
             <label class="control-label" data-name="{{key}}">
-                <span class="label-text">{{../name}} › {{name}}</span>
+                <span class="label-text">{{../name}} &#8250; {{name}}</span>
             </label>
             <div class="completeness">
                 <span class="progress-value">{{valueLabel}}%</span>
