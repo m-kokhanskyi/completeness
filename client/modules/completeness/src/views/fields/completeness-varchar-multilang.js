@@ -39,9 +39,9 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
 
         data() {
             let data = Dep.prototype.data.call(this);
-            data.value = Math.round(this.formatNumber(data.value) * 100) / 100;
+            data.value = this.formatNumber(this.roundNumber(data.value));
             data.valueList = this.langFieldNameList.map((name, i) => {
-                let value = Math.round(this.formatNumber(this.model.get(name)) * 100) / 100;
+                let value = this.formatNumber(this.roundNumber(this.model.get(name)));
                 return {
                     name: name,
                     value: value,
@@ -69,11 +69,12 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
             }
         },
 
-        formatNumber: function (value) {
-            if (this.disableFormatting) {
-                return value;
-            }
-            if (value) {
+        roundNumber(value) {
+            return Math.round(value * 100) / 100;
+        },
+
+        formatNumber(value) {
+            if (value !== null) {
                 let parts = value.toString().split(".");
                 parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousandSeparator);
                 return parts.join(this.decimalMark);
