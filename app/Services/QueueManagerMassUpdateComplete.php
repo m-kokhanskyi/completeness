@@ -27,9 +27,9 @@ use Completeness;
 use Treo\Services\QueueManagerBase;
 
 /**
- * Class QueueManagerMassUpdate
+ * Class QueueManagerMassUpdateComplete
  *
- * @author r.ratsun <r.ratsun@zinitsolutions.com>
+ * @author m.kokhanskyi <m.kokhanskyi@ztreolabs.com>
  */
 class QueueManagerMassUpdateComplete extends QueueManagerBase
 {
