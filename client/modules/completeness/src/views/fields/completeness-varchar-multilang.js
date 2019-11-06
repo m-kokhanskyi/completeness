@@ -39,12 +39,15 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
 
         data() {
             let data = Dep.prototype.data.call(this);
-            data.value = this.formatNumber(this.roundNumber(data.value));
+            data.value = this.roundNumber(data.value);
+            data.valueLabel = this.formatNumber(this.roundNumber(data.value));
             data.valueList = this.langFieldNameList.map((name, i) => {
-                let value = this.formatNumber(this.roundNumber(this.model.get(name)));
+                let value = this.roundNumber(this.model.get(name));
+                let valueLabel = this.formatNumber(this.roundNumber(this.model.get(name)));
                 return {
                     name: name,
                     value: value,
+                    valueLabel: valueLabel,
                     isNotEmpty: value !== null && value !== '',
                     shortLang: name.slice(-4, -2).toLowerCase() + '_' + name.slice(-2).toUpperCase(),
                     customLabel: this.options.customLabel,
