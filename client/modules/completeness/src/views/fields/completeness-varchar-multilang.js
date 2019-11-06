@@ -35,10 +35,19 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
                     this.decimalMark = this.getConfig().get('decimalMark');
                 }
             }
+
+            if (this.getPreferences().has('thousandSeparator')) {
+                this.decimalMark = this.getPreferences().get('thousandSeparator');
+            } else {
+                if (this.getConfig().has('thousandSeparator')) {
+                    this.decimalMark = this.getConfig().get('thousandSeparator');
+                }
+            }
         },
 
         data() {
             let data = Dep.prototype.data.call(this);
+
             data.value = this.roundNumber(data.value);
             data.valueLabel = this.formatNumber(this.roundNumber(data.value));
             data.valueList = this.langFieldNameList.map((name, i) => {

@@ -39,6 +39,22 @@ Espo.define('completeness:views/product/record/panels/parts/channels-completenes
         setup() {
             Dep.prototype.setup.call(this);
 
+            if (this.getPreferences().has('decimalMark')) {
+                this.decimalMark = this.getPreferences().get('decimalMark');
+            } else {
+                if (this.getConfig().has('decimalMark')) {
+                    this.decimalMark = this.getConfig().get('decimalMark');
+                }
+            }
+
+            if (this.getPreferences().has('thousandSeparator')) {
+                this.decimalMark = this.getPreferences().get('thousandSeparator');
+            } else {
+                if (this.getConfig().has('thousandSeparator')) {
+                    this.decimalMark = this.getConfig().get('thousandSeparator');
+                }
+            }
+
             this.listenTo(this.collection, 'update', () => this.reRender());
         },
 
