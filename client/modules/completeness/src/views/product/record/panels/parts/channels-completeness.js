@@ -48,10 +48,10 @@ Espo.define('completeness:views/product/record/panels/parts/channels-completenes
             }
 
             if (this.getPreferences().has('thousandSeparator')) {
-                this.decimalMark = this.getPreferences().get('thousandSeparator');
+                this.thousandSeparator = this.getPreferences().get('thousandSeparator');
             } else {
                 if (this.getConfig().has('thousandSeparator')) {
-                    this.decimalMark = this.getConfig().get('thousandSeparator');
+                    this.thousandSeparator = this.getConfig().get('thousandSeparator');
                 }
             }
 
