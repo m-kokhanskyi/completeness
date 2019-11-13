@@ -1,7 +1,7 @@
 {
   "name": "treolabs/completeness",
   "require": {
-    "treolabs/treocore": "~3.22.0"
+    "treolabs/treocore": "~3.23.29"
   },
   "autoload": {
     "psr-4": {
