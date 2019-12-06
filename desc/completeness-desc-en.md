@@ -10,7 +10,7 @@ To install the "Completeness" module to your system, go to `Administration > Mod
 
 Select the desired version in the installation pop-up window that appears and click the `Install` button. The module background will turn green and it will be moved to the "Installed" section of the Module Manager. Click `Run update` to confirm its installation.
 
-Please, note that running the system update will lead to the logout of all users.
+> Please, note that running the system update will lead to the logout of all users.
 
 To update/remove the "Completeness" module from the system, use the corresponding options from its single record actions menu in `Administration > Module Manager`. 
 

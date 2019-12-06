@@ -1,13 +1,7 @@
 {
   "name": "treolabs/completeness",
-  "authors": [
-    {
-      "name": "Roman Ratsun",
-      "email": "r.ratsun@treolabs.com"
-    }
-  ],
   "require": {
-    "treolabs/treocore": "~3.22.0"
+    "treolabs/treocore": ">=3.23.29 <3.25.0"
   },
   "autoload": {
     "psr-4": {

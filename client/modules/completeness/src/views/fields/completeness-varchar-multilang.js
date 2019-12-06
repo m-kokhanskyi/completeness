@@ -35,16 +35,28 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
                     this.decimalMark = this.getConfig().get('decimalMark');
                 }
             }
+
+            if (this.getPreferences().has('thousandSeparator')) {
+                this.thousandSeparator = this.getPreferences().get('thousandSeparator');
+            } else {
+                if (this.getConfig().has('thousandSeparator')) {
+                    this.thousandSeparator = this.getConfig().get('thousandSeparator');
+                }
+            }
         },
 
         data() {
             let data = Dep.prototype.data.call(this);
-            data.value = Math.round(this.formatNumber(data.value) * 100) / 100;
+
+            data.value = this.roundNumber(data.value);
+            data.valueLabel = this.formatNumber(this.roundNumber(data.value));
             data.valueList = this.langFieldNameList.map((name, i) => {
-                let value = Math.round(this.formatNumber(this.model.get(name)) * 100) / 100;
+                let value = this.roundNumber(this.model.get(name));
+                let valueLabel = this.formatNumber(this.roundNumber(this.model.get(name)));
                 return {
                     name: name,
                     value: value,
+                    valueLabel: valueLabel,
                     isNotEmpty: value !== null && value !== '',
                     shortLang: name.slice(-4, -2).toLowerCase() + '_' + name.slice(-2).toUpperCase(),
                     customLabel: this.options.customLabel,
@@ -69,11 +81,12 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
             }
         },
 
-        formatNumber: function (value) {
-            if (this.disableFormatting) {
-                return value;
-            }
-            if (value) {
+        roundNumber(value) {
+            return Math.round(value * 100) / 100;
+        },
+
+        formatNumber(value) {
+            if (value !== null) {
                 let parts = value.toString().split(".");
                 parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousandSeparator);
                 return parts.join(this.decimalMark);
