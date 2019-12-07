@@ -77,12 +77,22 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         $sql = "SELECT c.id AS id, c.name AS name, {$selectFields}
                 FROM product p
                     RIGHT JOIN product_channel pc ON pc.product_id = p.id AND pc.deleted = 0
-                    LEFT JOIN channel c ON c.id = pc.channel_id AND c.deleted = 0
+                    RIGHT JOIN channel c ON c.id = pc.channel_id AND c.deleted = 0
                 WHERE p.deleted = 0 GROUP BY c.id";
 
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
-        return $sth->fetchAll(PDO::FETCH_ASSOC);
+        $values = $this->getEntityManager()->nativeQuery($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($values as $i => $item) {
+            foreach ($item as $k => $value) {
+                if ($k == 'id' || $k === 'name') {
+                    $result[$i][$k] = $value;
+                } else {
+                    $result[$i][$k] = (float)$value;
+                }
+            }
+        }
+        return $result;
     }
 
     /**
@@ -97,14 +107,16 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         // prepare result
         $result = [
             'id' => 'total',
-            'name' => 'total'
+            'name' => 'total',
         ];
-
         $sql = "SELECT " . $selectFields . " FROM product WHERE deleted = 0";
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
 
-        return array_merge($result, $sth->fetch(PDO::FETCH_ASSOC));
+        $values = $this->getEntityManager()->nativeQuery($sql)->fetch(PDO::FETCH_ASSOC);
+        foreach ($values as $k => $value) {
+            $result[$k] = (float)$value;
+        }
+
+        return $result;
     }
 
     /**
@@ -114,41 +126,14 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
      */
     protected function prepareCompletenessFieldsForSql(): string
     {
-        $completenessFields = $this->getCompletenessLangFields();
-        $completenessFields['default'] = 'completeTotal';
+        $selectFields[] = 'ROUND(AVG(' . Util::fromCamelCase('complete') . '), 2) AS `' . 'default' . '`';
 
-        $selectFields = [];
-        foreach ($completenessFields as $alias => $field) {
-            $selectFields[] = 'ROUND(AVG(' .  Util::fromCamelCase($field) . '), 2) AS `' . $alias . '`';
+        foreach ($this->getLanguages() as $local => $lang) {
+            $field = 'complete_' . $local;
+            $selectFields[] = 'ROUND(AVG(' . $field . '), 2) AS `' . $local . '`';
         }
 
         return implode($selectFields, ', ');
-    }
-
-    /**
-     * Get fields product
-     *
-     * @return array
-     */
-    protected function getCompletenessLangFields(): array
-    {
-        $fields = $this->getContainer()->get('metadata')->get('entityDefs.Product.fields', []);
-        foreach ($fields as $fieldName => $fieldData) {
-            if (empty($fieldData['isCompleteness'])) {
-                unset($fields[$fieldName]);
-            }
-        }
-
-        $completenessFields = [];
-        if (!empty($fields)) {
-            $fields = array_keys($fields);
-            foreach ($this->getLanguages() as $local => $language) {
-                if (!in_array('complete' . ucfirst($language), $fields)) {
-                    $completenessFields[$local] = 'complete' . ucfirst($language);
-                }
-            }
-        }
-        return $completenessFields;
     }
 
     /**

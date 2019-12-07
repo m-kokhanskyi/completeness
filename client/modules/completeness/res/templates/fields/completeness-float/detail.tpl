@@ -15,7 +15,7 @@
     {{/if}}
 </div>
 {{#if valueList}}
-<div class="multilang-labels hidden">
+<div class="multilang-labels">
 {{#each valueList}}
     <label class="control-label" data-name="{{name}}">
         <span class="label-text">{{#if customLabel}}{{customLabel}}{{else}}{{translate ../../name category='fields' scope=../../scope}}{{/if}} &rsaquo; {{shortLang}}</span>

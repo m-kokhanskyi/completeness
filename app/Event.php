@@ -67,6 +67,10 @@ class Event extends AbstractEvent
      */
     protected function hasCompleteness(string $entityName): bool
     {
-        return $this->getService('Completeness')->hasCompleteness($entityName);
+        return  $this
+            ->getContainer()
+            ->get('serviceFactory')
+            ->create('Completeness')
+            ->hasCompleteness($entityName);
     }
 }

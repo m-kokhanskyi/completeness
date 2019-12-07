@@ -33,8 +33,10 @@ use Treo\Core\Container;
  */
 interface CompletenessInterface
 {
-    public function run(): array;
-    public function setLanguages(array $languages): void;
+    public function calculate(): array;
     public function setEntity(Entity $entity): void;
     public function setContainer(Container $container);
+    public function saveEntity(): void;
+
+    public static function getCompleteField(): array;
 }

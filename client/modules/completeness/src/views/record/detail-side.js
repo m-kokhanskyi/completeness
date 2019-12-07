@@ -84,18 +84,21 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
 
         setupCompletenessPanel() {
             let view = this.getMetadata().get(['clientDefs', this.model.name, 'completenessPanelView']) || 'completeness:views/record/panels/complete-side';
+            let fields = this.getMetadata().get(['entityDefs', this.model.name, 'fields'], []);
+            let completeFields = [];
+            for (let field in fields) {
+                let defs = fields[field];
+                if (defs.isCompleteness && !defs.multilangField) {
+                    completeFields.push({name: field});
+                }
+            }
             let completenessPanelDefs = {
                 name: 'complete',
                 label: 'Complete',
                 view: view,
-                fieldList: [
-                    {
-                        name: 'complete'
-                    }
-                ]
+                fieldList: completeFields
             };
             this.panelList.push(completenessPanelDefs);
-        }
-
+        },
     })
 });

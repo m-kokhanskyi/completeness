@@ -35,38 +35,6 @@ use Treo\Listeners\AbstractListener;
 class Metadata extends AbstractListener
 {
 
-    const CONFIG_IS_ACTIVE = [
-        'type' => 'bool',
-        'default' => false,
-        'layoutFiltersDisabled' => true,
-        'layoutMassUpdateDisabled' => true,
-        'customizationDisabled' => true,
-        'view' => 'completeness:views/fields/is-active'
-    ];
-
-    const CONFIG_COMPLETE_FIELDS = [
-        'type' => 'varcharMultiLang',
-        'view' => 'completeness:views/fields/completeness-varchar-multilang',
-        'readOnly' => true,
-        'default' => '0',
-        "trim" => true,
-        'layoutDetailDisabled' => true,
-        'layoutFiltersDisabled' => true,
-        'layoutMassUpdateDisabled' => true,
-        'customizationDisabled' => true,
-        'importDisabled' => true,
-        'exportDisabled' => true,
-        'advancedFilterDisabled' => true,
-        'isCompleteness' => true
-    ];
-
-    const CONFIG_FIELD_CHANNELS_DATA = [
-        'type' => 'jsonObject',
-        'layoutDetailDisabled' => true,
-        'layoutListDisabled' => true,
-        "importDisabled" => true,
-    ];
-
     /**
      * Modify
      *
@@ -76,8 +44,6 @@ class Metadata extends AbstractListener
     {
         // get data
         $data = $event->getArgument('data');
-        // inject complete
-        $data = $this->addComplete($data);
         $data = $this->addDashlet($data);
 
         $event->setArgument('data', $data);
@@ -98,68 +64,5 @@ class Metadata extends AbstractListener
         }
 
         return $data;
-    }
-
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
-    protected function addComplete(array $data): array
-    {
-        $config = $this->getContainer()->get('config');
-        $languages = $config->get('inputLanguageList', []);
-
-        foreach ($data['entityDefs'] as $entity => $row) {
-            if (!empty($data['scopes'][$entity]['hasCompleteness'])) {
-                $this->createMainCompleteFields($data, $entity);
-                $this->createLangCompleteFields($data, $entity, $languages);
-                $this->createIsActiveField($data, $entity);
-
-                $data['entityDefs'][$entity]['fields']['channelCompleteness'] = self::CONFIG_FIELD_CHANNELS_DATA;
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * @param array $data
-     * @param string $entity
-     */
-    protected function createMainCompleteFields(array &$data, string $entity)
-    {
-        $fieldsComplete = ['complete', 'completeTotal', 'completeGlobal'];
-
-        foreach ($fieldsComplete as $field) {
-            $data['entityDefs'][$entity]['fields'][$field] = self::CONFIG_COMPLETE_FIELDS;
-        }
-    }
-
-    /**
-     * @param array $data
-     * @param string $entity
-     * @param array $languages
-     */
-    protected function createLangCompleteFields(array &$data, string $entity, array $languages)
-    {
-        foreach ($languages as $language) {
-            // prepare key
-            $key = Util::toCamelCase('complete_' . strtolower($language));
-            $data['entityDefs'][$entity]['fields'][$key] = self::CONFIG_COMPLETE_FIELDS;
-        }
-    }
-
-    /**
-     * @param array $data
-     * @param string $entity
-     */
-    protected function createIsActiveField(array &$data, string $entity): void
-    {
-        if (!isset($data['entityDefs'][$entity]['fields']['isActive'])) {
-            $data['entityDefs'][$entity]['fields']['isActive'] = self::CONFIG_IS_ACTIVE;
-        } else {
-            $data['entityDefs'][$entity]['fields']['isActive']['view'] = self::CONFIG_IS_ACTIVE['view'];
-        }
     }
 }

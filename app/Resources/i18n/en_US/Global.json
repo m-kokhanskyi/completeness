@@ -1,6 +1,8 @@
 {
     "fields": {
         "complete": "Complete",
+        "completeGlobal": "Global complete",
+        "completeTotal": "Total complete",
         "isActive": "Is active",
         "completeEnGb": "Complete (EnGb)",
         "completeEnUs": "Complete (EnUs)",

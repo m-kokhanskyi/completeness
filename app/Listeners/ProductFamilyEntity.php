@@ -34,7 +34,6 @@ use Treo\Core\EventManager\Event;
  */
 class ProductFamilyEntity extends AbstractListener
 {
-
     /**
      * @param Event $event
      */

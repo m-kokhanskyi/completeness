@@ -18,12 +18,12 @@
  * for your own needs, if source code is provided.
  */
 
-Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multilang:views/fields/varchar-multilang',
+Espo.define('completeness:views/fields/completeness-float', 'views/fields/float',
     Dep => Dep.extend({
 
-        listTemplate: 'completeness:fields/completeness-varchar-multilang/list',
+        listTemplate: 'completeness:fields/completeness-float/list',
 
-        detailTemplate: 'completeness:fields/completeness-varchar-multilang/detail',
+        detailTemplate: 'completeness:fields/completeness-float/detail',
 
         setup() {
             Dep.prototype.setup.call(this);
@@ -49,35 +49,36 @@ Espo.define('completeness:views/fields/completeness-varchar-multilang', 'multila
             let data = Dep.prototype.data.call(this);
 
             data.value = this.roundNumber(data.value);
-            data.valueLabel = this.formatNumber(this.roundNumber(data.value));
-            data.valueList = this.langFieldNameList.map((name, i) => {
-                let value = this.roundNumber(this.model.get(name));
-                let valueLabel = this.formatNumber(this.roundNumber(this.model.get(name)));
-                return {
-                    name: name,
-                    value: value,
-                    valueLabel: valueLabel,
-                    isNotEmpty: value !== null && value !== '',
-                    shortLang: name.slice(-4, -2).toLowerCase() + '_' + name.slice(-2).toUpperCase(),
-                    customLabel: this.options.customLabel,
-                    index: i
-                }
-            });
+            data.valueLabel = this.formatNumber(data.value);
+
+            let inputLanguageList = this.getConfig().get('inputLanguageList') || [];
+            if (this.getConfig().get('isMultilangActive') && inputLanguageList.length && this.getMetadata().get(['entityDefs', data.scope, 'fields', data.name, 'isMultilang'])) {
+                data.valueList = inputLanguageList.map((lang, i) => {
+                    let local = lang.split('_').reduce((prev, curr) => prev + Espo.Utils.upperCaseFirst(curr.toLocaleLowerCase()), '');
+                    let name = data.name + local;
+                    let value = this.roundNumber(this.model.get(name));
+                    return {
+                        name: name,
+                        value: value,
+                        valueLabel: this.formatNumber(value),
+                        isNotEmpty: value !== null && value !== '',
+                        shortLang: lang,
+                        customLabel: this.options.customLabel,
+                        index: i
+                    }
+
+                });
+            }
             return data;
         },
 
         afterRender() {
+            Dep.prototype.afterRender.call(this);
+
             if (this.mode === 'detail' || this.mode === 'list') {
                 if (parseFloat(this.model.get(this.name)) === 0) {
                     this.$el.find('.completeness.general .progress-value').addClass('none');
                 }
-            }
-            if (this.mode === 'detail') {
-                this.langFieldNameList.forEach((lang, i) => {
-                    if (parseFloat(this.model.get(lang)) === 0) {
-                        this.$el.find(`.completeness.list-elem-${i} .progress-value`).addClass('none');
-                    }
-                });
             }
         },
 
