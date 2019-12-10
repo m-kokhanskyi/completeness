@@ -22,9 +22,6 @@ declare(strict_types=1);
 
 namespace Completeness;
 
-use Completeness\Services\CommonCompleteness;
-use Completeness\Services\CompletenessInterface as ICompleteness;
-use Espo\Core\Utils\Json;
 use Treo\Core\ModuleManager\AbstractModule;
 
 /**
@@ -34,81 +31,11 @@ use Treo\Core\ModuleManager\AbstractModule;
  */
 class Module extends AbstractModule
 {
-    const CONFIG_IS_ACTIVE = [
-        'type' => 'bool',
-        'default' => false,
-        'layoutFiltersDisabled' => true,
-        'layoutMassUpdateDisabled' => true,
-        'customizationDisabled' => true,
-        'view' => 'completeness:views/fields/is-active'
-    ];
-
     /**
      * @inheritdoc
      */
     public static function getLoadOrder(): int
     {
-        return 5115;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function loadMetadata(\stdClass &$data)
-    {
-        parent::loadMetadata($data);
-
-        $result = Json::decode(Json::encode($data), true);
-
-        $result = $this->addComplete($result);
-
-        $data = Json::decode(Json::encode($result));
-    }
-
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
-    protected function addComplete(array $data): array
-    {
-        foreach ($data['entityDefs'] as $entity => $row) {
-            if (!empty($data['scopes'][$entity]['hasCompleteness']) && !empty($data['scopes'][$entity]['entity'])) {
-                /** @var ICompleteness $service */
-                $service = CommonCompleteness::class;
-                if (!empty($class = $data['scopes'][$entity]['completeness']['service'])
-                        && class_exists($class) && new $class instanceof ICompleteness) {
-                    $service = $class;
-                }
-
-                $this->createCompleteFields($data, $entity, $service::getCompleteField());
-                $this->createIsActiveField($data, $entity);
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * @param array $data
-     * @param string $entity
-     */
-    protected function createCompleteFields(array &$data, string $entity, array $fields)
-    {
-        $data['entityDefs'][$entity]['fields'] = array_merge($data['entityDefs'][$entity]['fields'], $fields);
-    }
-
-
-    /**
-     * @param array $data
-     * @param string $entity
-     */
-    protected function createIsActiveField(array &$data, string $entity): void
-    {
-        if (!isset($data['entityDefs'][$entity]['fields']['isActive'])) {
-            $data['entityDefs'][$entity]['fields']['isActive'] = self::CONFIG_IS_ACTIVE;
-        } else {
-            $data['entityDefs'][$entity]['fields']['isActive']['view'] = self::CONFIG_IS_ACTIVE['view'];
-        }
+        return 5109;
     }
 }
