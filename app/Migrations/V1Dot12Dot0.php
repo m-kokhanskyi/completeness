@@ -25,6 +25,7 @@ namespace Completeness\Migrations;
 
 use Espo\ORM\EntityCollection;
 use Treo\Core\Migration\AbstractMigration;
+use Treo\Core\Utils\Auth;
 
 /**
  * Class V1Dot12Dot0
@@ -39,6 +40,8 @@ class V1Dot12Dot0 extends AbstractMigration
      */
     public function up(): void
     {
+        (new Auth($this->getContainer()))->useNoAuth();
+
         $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
         $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
         foreach ($defs as $entity => $row) {

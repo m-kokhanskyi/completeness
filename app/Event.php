@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Completeness;
 
 use Treo\Core\ModuleManager\AbstractEvent;
+use Treo\Core\Utils\Auth;
 
 /**
  * Class Event
@@ -36,6 +37,8 @@ class Event extends AbstractEvent
      */
     public function afterInstall(): void
     {
+        (new Auth($this->getContainer()))->useNoAuth();
+
         $entityDefs = $this
             ->getContainer()
             ->get('metadata')
