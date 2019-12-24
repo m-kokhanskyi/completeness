@@ -105,8 +105,9 @@ class Metadata extends AbstractListener
     /**
      * @param array $data
      * @param string $entity
+     * @param array $fields
      */
-    protected function createCompleteFields(array &$data, string $entity, array $fields)
+    protected function createCompleteFields(array &$data, string $entity, array $fields): void
     {
         $data['entityDefs'][$entity]['fields'] = array_merge($data['entityDefs'][$entity]['fields'], $fields);
     }

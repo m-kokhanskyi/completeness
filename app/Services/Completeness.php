@@ -135,17 +135,6 @@ class Completeness extends AbstractService
     }
 
     /**
-     * @return array
-     */
-    protected function getMethodsCompleteness(): array
-    {
-        return $this
-            ->getContainer()
-            ->get('metadata')
-            ->get('completeness.Completeness.servicesCompleteness', []);
-    }
-
-    /**
      * @param string $entityName
      *
      * @param int $limit
@@ -155,7 +144,7 @@ class Completeness extends AbstractService
      */
     protected function selectLimitById(string $entityName, $limit = 2000, $offset = 0, array $where = []): array
     {
-        return $entities = $this->getEntityManager()
+        return $this->getEntityManager()
             ->getRepository($entityName)
             ->select(['id'])
             ->where($where)

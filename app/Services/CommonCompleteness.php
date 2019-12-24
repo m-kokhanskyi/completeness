@@ -32,7 +32,7 @@ use Treo\Services\AbstractService;
 
 class CommonCompleteness extends AbstractService implements CompletenessInterface
 {
-    const CONFIG_COMPLETE_FIELDS = [
+    public const CONFIG_COMPLETE_FIELDS = [
         'type' => 'float',
         'view' => 'completeness:views/fields/completeness-float',
         'readOnly' => true,
@@ -91,7 +91,7 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
     }
 
     /**
-     * @return Entity
+     * @return void
      */
     public function saveEntity(): void
     {
@@ -107,7 +107,7 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
         $fields = [];
         foreach ($fieldsComplete as $field) {
             $defs = self::CONFIG_COMPLETE_FIELDS;
-            if ($field == 'complete') {
+            if ($field === 'complete') {
                 $defs['isMultilang'] = true;
             }
             $fields[$field] = $defs;
@@ -192,8 +192,6 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
     /**
      * @param mixed $value
-     * @param string $language
-     *
      * @return bool
      */
     protected function isEmpty($value): bool

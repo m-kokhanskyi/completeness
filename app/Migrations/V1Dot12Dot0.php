@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Migrations;
 
+use Espo\ORM\EntityCollection;
 use Treo\Core\Migration\AbstractMigration;
 
 /**
@@ -32,6 +33,7 @@ use Treo\Core\Migration\AbstractMigration;
  */
 class V1Dot12Dot0 extends AbstractMigration
 {
+    public const LIMIT = 10000;
     /**
      * Up to current
      */
@@ -51,9 +53,32 @@ class V1Dot12Dot0 extends AbstractMigration
      */
     protected function recalcEntities(string $entityName): void
     {
-        $this->getContainer()
-            ->get('serviceFactory')
-            ->create('Completeness')
-            ->recalcEntities($entityName);
+        $count = $this->getEntityManager()->getRepository($entityName)->count();
+        if ($count > 0) {
+            for ($j = 0; $j <= $count; $j += self::LIMIT) {
+                $entities = $this->selectLimitById($entityName, self::LIMIT, $j);
+                foreach ($entities as $entity) {
+                    $this->getContainer()
+                        ->get('serviceFactory')
+                        ->create('Completeness')
+                        ->runUpdateCompleteness($entity);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $entityName
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return EntityCollection
+     */
+    protected function selectLimitById(string $entityName, $limit = 2000, $offset = 0): EntityCollection
+    {
+        return $this->getEntityManager()
+            ->getRepository($entityName)
+            ->limit($offset, $limit)
+            ->find();
     }
 }
