@@ -25,51 +25,10 @@ Espo.define('completeness:views/fields/completeness-float', 'views/fields/float'
 
         detailTemplate: 'completeness:fields/completeness-float/detail',
 
-        setup() {
-            Dep.prototype.setup.call(this);
-
-            if (this.getPreferences().has('decimalMark')) {
-                this.decimalMark = this.getPreferences().get('decimalMark');
-            } else {
-                if (this.getConfig().has('decimalMark')) {
-                    this.decimalMark = this.getConfig().get('decimalMark');
-                }
-            }
-
-            if (this.getPreferences().has('thousandSeparator')) {
-                this.thousandSeparator = this.getPreferences().get('thousandSeparator');
-            } else {
-                if (this.getConfig().has('thousandSeparator')) {
-                    this.thousandSeparator = this.getConfig().get('thousandSeparator');
-                }
-            }
-        },
-
         data() {
-            let data = Dep.prototype.data.call(this);
-
-            data.value = this.roundNumber(data.value);
-            data.valueLabel = this.formatNumber(data.value);
-
-            let inputLanguageList = this.getConfig().get('inputLanguageList') || [];
-            if (this.getConfig().get('isMultilangActive') && inputLanguageList.length && this.getMetadata().get(['entityDefs', data.scope, 'fields', data.name, 'isMultilang'])) {
-                data.valueList = inputLanguageList.map((lang, i) => {
-                    let local = lang.split('_').reduce((prev, curr) => prev + Espo.Utils.upperCaseFirst(curr.toLocaleLowerCase()), '');
-                    let name = data.name + local;
-                    let value = this.roundNumber(this.model.get(name));
-                    return {
-                        name: name,
-                        value: value,
-                        valueLabel: this.formatNumber(value),
-                        isNotEmpty: value !== null && value !== '',
-                        shortLang: lang,
-                        customLabel: this.options.customLabel,
-                        index: i
-                    }
-
-                });
-            }
-            return data;
+            return _.extend({
+                progressBarValue: this.roundNumber(this.model.get(this.name))
+            }, Dep.prototype.data.call(this));
         },
 
         afterRender() {
@@ -84,15 +43,7 @@ Espo.define('completeness:views/fields/completeness-float', 'views/fields/float'
 
         roundNumber(value) {
             return Math.round(value * 100) / 100;
-        },
+        }
 
-        formatNumber(value) {
-            if (value !== null) {
-                let parts = value.toString().split(".");
-                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, this.thousandSeparator);
-                return parts.join(this.decimalMark);
-            }
-            return '';
-        },
     })
 );

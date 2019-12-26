@@ -103,13 +103,14 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
      */
     public static function getCompleteField(): array
     {
-        $fieldsComplete = ['completeTotal', 'complete'];
+        $fieldsComplete = [1 => 'completeTotal', 4 => 'complete'];
         $fields = [];
-        foreach ($fieldsComplete as $field) {
+        foreach ($fieldsComplete as $k => $field) {
             $defs = self::CONFIG_COMPLETE_FIELDS;
             if ($field === 'complete') {
                 $defs['isMultilang'] = true;
             }
+            $defs['sortOrder'] = $k;
             $fields[$field] = $defs;
         }
 
