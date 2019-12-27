@@ -1,9 +1,3 @@
-<style>
-    .progress {
-        height: 5px;
-        margin-bottom: 5px;
-    }
-</style>
 <div class="completeness general">
     {{#if isNotEmpty}}
     <span class="progress-value">{{value}}%</span>
