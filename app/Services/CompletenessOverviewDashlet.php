@@ -25,7 +25,6 @@ namespace Completeness\Services;
 
 use Espo\Core\Utils\Util;
 use PDO;
-use Treo\Services\DashletInterface;
 use Treo\Services\AbstractService;
 
 /**
@@ -33,9 +32,8 @@ use Treo\Services\AbstractService;
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class CompletenessOverviewDashlet extends AbstractService implements DashletInterface
+class CompletenessOverviewDashlet extends AbstractService
 {
-
     /**
      * Get dashlet data
      *
@@ -46,7 +44,7 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         // prepare result
         $result = [
             'total' => 0,
-            'list' => []
+            'list'  => []
         ];
 
         // get completeness fields
@@ -70,6 +68,7 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
      * Get channel complete overview
      *
      * @param string $selectFields
+     *
      * @return array
      */
     protected function getChannelComplete(string $selectFields): array
@@ -106,7 +105,7 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
     {
         // prepare result
         $result = [
-            'id' => 'total',
+            'id'   => 'total',
             'name' => 'total',
         ];
         $sql = "SELECT " . $selectFields . " FROM product WHERE deleted = 0";
