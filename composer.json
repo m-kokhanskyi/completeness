@@ -1,7 +1,7 @@
 {
   "name": "treolabs/completeness",
   "require": {
-    "treolabs/treocore": ">=3.23.29 <3.25.0",
+    "treolabs/treocore": ">=3.23.29 <3.26.0",
     "treolabs/completeness-common": "~1.0.0"
   },
   "autoload": {
