@@ -25,6 +25,7 @@ namespace Completeness\Services;
 
 use Espo\Core\Utils\Util;
 use PDO;
+use Treo\Services\DashletInterface;
 use Treo\Services\AbstractService;
 
 /**
@@ -32,7 +33,7 @@ use Treo\Services\AbstractService;
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class CompletenessOverviewDashlet extends AbstractService
+class CompletenessOverviewDashlet extends AbstractService implements DashletInterface
 {
     /**
      * Get dashlet data
