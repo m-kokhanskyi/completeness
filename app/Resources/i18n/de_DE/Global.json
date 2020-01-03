@@ -1,29 +1,9 @@
 {
     "fields": {
         "complete": "Vollständigkeit",
-        "isActive": "Aktiv",
-        "completeEnGb": "Complete (EnGb)",
-        "completeEnUs": "Complete (EnUs)",
-        "completeEsMx": "Complete (EsMx)",
-        "completeCsCz": "Complete (CsCz)",
-        "completeDaDk": "Complete (DaDk)",
-        "completeDeDe": "Complete (DeDe)",
-        "completeEsEs": "Complete (EsEs)",
-        "completeFrFr": "Complete (FrFr)",
-        "completeIdId": "Complete (IdId)",
-        "completeItIt": "Complete (ItIt)",
-        "completeLtLt": "Complete (LtLt)",
-        "completeNbNo": "Complete (NbNo)",
-        "completeNlNl": "Complete (NlNl)",
-        "completeTrTr": "Complete (TrTr)",
-        "completeSrRs": "Complete (SrRs)",
-        "completeRoRo": "Complete (RoRo)",
-        "completeRuRu": "Complete (RuRu)",
-        "completePlPl": "Complete (PlPl)",
-        "completePtBr": "Complete (PtBr)",
-        "completeUkUa": "Complete (UkUa)",
-        "completeViVn": "Complete (ViVn)",
-        "completeZhCn": "Complete (ZhCn)"
+        "completeGlobal": "Vollständigkeit Global",
+        "completeTotal": "Vollständigkeit insgesamt",
+        "isActive": "Aktiv"
     },
     "labels": {
         "Complete": "Vollständigkeit"

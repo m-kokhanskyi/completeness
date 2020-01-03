@@ -1,13 +1,13 @@
 <?php
 /**
  * Completeness
- * TreoPIM Premium Plugin
+ * Premium Plugin
  * Copyright (c) TreoLabs GmbH
  *
  * This Software is the property of TreoLabs GmbH and is protected
  * by copyright law - it is NOT Freeware and can be used only in one project
  * under a proprietary license, which is delivered along with this program.
- * If not, see http://treopim.com/eula.
+ * If not, see <http://treopim.com/eula>.
  *
  * This Software is distributed as is, with LIMITED WARRANTY AND LIABILITY.
  * Any unauthorised use of this Software without a valid license is
@@ -21,28 +21,22 @@
 
 declare(strict_types=1);
 
-namespace Completeness\Listeners;
+namespace Completeness\Services;
+
+use Espo\ORM\Entity;
+use Treo\Core\Container;
 
 /**
- * Class EntityManagerTest
- *
- * @author r.ratsun@treolabs.com
+ * Interface CompletenessInterface
+ * @package Completeness\Services
+ * @author m.kokhanskyi <m.kokhanskyi@treolabs.com>
  */
-class EntityManagerTest extends \PHPUnit\Framework\TestCase
+interface CompletenessInterface
 {
+    public function calculate(): array;
+    public function setEntity(Entity $entity): void;
+    public function setContainer(Container $container);
+    public function saveEntity(): void;
 
-    /**
-     * Test for beforeActionUpdateEntity method
-     */
-    public function testBeforeActionUpdateEntityMethod()
-    {
-        // create mock
-        $mock = $this->createPartialMock(EntityManager::class, ['recalcCompleteness']);
-
-        // test 1
-        $this->assertEquals([], $mock->beforeActionUpdateEntity([]));
-
-        // test 2
-        $this->assertEquals([1], $mock->beforeActionUpdateEntity([1]));
-    }
+    public static function getCompleteField(): array;
 }

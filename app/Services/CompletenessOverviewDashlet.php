@@ -23,10 +23,9 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\Core\Exceptions\Error;
-use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
-use Pim\Services\DashletInterface;
+use PDO;
+use Treo\Services\DashletInterface;
 use Treo\Services\AbstractService;
 
 /**
@@ -40,7 +39,6 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
      * Get dashlet data
      *
      * @return array
-     * @throws Error
      */
     public function getDashlet(): array
     {
@@ -51,14 +49,14 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
         ];
 
         // get completeness fields
-        $completenessFields = $this->getCompletenessFieldInProduct();
+        $completenessSelectFields = $this->prepareCompletenessFieldsForSql();
 
-        if (count($completenessFields) > 0) {
+        if (!empty($completenessSelectFields)) {
             // push channel complete
-            $result['list'] = $this->getChannelComplete($completenessFields);
+            $result['list'] = $this->getChannelComplete($completenessSelectFields);
 
             // push total
-            $result['list'][] = $this->getCompletenessTotal($completenessFields);
+            $result['list'][] = $this->getCompletenessTotal($completenessSelectFields);
 
             // prepare total
             $result['total'] = count($result['list']);
@@ -68,152 +66,89 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
     }
 
     /**
-     * Get completeness field in product
-     *
-     * @return array
-     * @throws Error
-     */
-    protected function getCompletenessFieldInProduct(): array
-    {
-        // get Product fields
-        $fields = $this->getMetadata()->get('entityDefs.Product.fields');
-        $result = [];
-
-        foreach ($fields as $fieldName => $fieldData) {
-            if ($fieldData['isCompleteness'] ?? false) {
-                $result[$this->getLanguageKey($fieldName)] = $fieldName;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
      * Get channel complete overview
      *
-     * @param array $completenessFields
+     * @param string $selectFields
      *
      * @return array
      */
-    protected function getChannelComplete(array $completenessFields): array
+    protected function getChannelComplete(string $selectFields): array
     {
-        // prepare result
+        $sql = "SELECT c.id AS id, c.name AS name, {$selectFields}
+                FROM product p
+                    RIGHT JOIN product_channel pc ON pc.product_id = p.id AND pc.deleted = 0
+                    RIGHT JOIN channel c ON c.id = pc.channel_id AND c.deleted = 0
+                WHERE p.deleted = 0 GROUP BY c.id";
+
+        $values = $this->getEntityManager()->nativeQuery($sql)->fetchAll(PDO::FETCH_ASSOC);
+
         $result = [];
-
-        // get products channel data
-        $data = $this
-            ->getEntityManager()
-            ->getRepository('Channel')
-            ->distinct()
-            ->join('products')
-            ->where([
-                'products.id!=' => null
-            ])
-            ->find();
-
-        if (count($data) > 0) {
-            // prepare channels
-            $channels = [];
-            foreach ($data as $row) {
-                $channels[$row->get('id')]['channelId'] = $row->get('id');
-                $channels[$row->get('id')]['channelName'] = $row->get('name');
-                $channels[$row->get('id')]['products'] = $row->get('products')->toArray();
-                foreach ($completenessFields as $key => $field) {
-                    if (!isset($channels[$row->get('id')][$key])) {
-                        $channels[$row->get('id')][$key] = 0;
-                    }
-
-                    foreach ($channels[$row->get('id')]['products'] as $product) {
-                        $channels[$row->get('id')][$key] += $product[$field];
-                    }
+        foreach ($values as $i => $item) {
+            foreach ($item as $k => $value) {
+                if ($k == 'id' || $k === 'name') {
+                    $result[$i][$k] = $value;
+                } else {
+                    $result[$i][$k] = (float)$value;
                 }
-            }
-
-            // prepare result
-            foreach ($channels as $row) {
-                $item = [
-                    'id' => $row['channelId'],
-                    'name' => $row['channelName'],
-                ];
-                foreach ($completenessFields as $key => $field) {
-                    $item[$key] = round(($row[$key] / count($row['products'])), 2);
-                }
-
-                // push
-                $result[] = $item;
             }
         }
-
         return $result;
     }
 
     /**
      * Get completeness total data
      *
-     * @param array $completenessFields
+     * @param string $selectFields
      *
      * @return array
      */
-    protected function getCompletenessTotal(array $completenessFields): array
+    protected function getCompletenessTotal(string $selectFields): array
     {
         // prepare result
         $result = [
             'id'   => 'total',
-            'name' => 'total'
+            'name' => 'total',
         ];
+        $sql = "SELECT " . $selectFields . " FROM product WHERE deleted = 0";
 
-        $selectFields = [];
-        foreach ($completenessFields as $alias => $field) {
-            $selectFields[] = 'AVG(' . Util::fromCamelCase($field) . ') AS `' . $alias . '`';
-        }
-
-        $sql = "SELECT " . implode($selectFields, ', ') . " FROM product WHERE deleted = 0";
-
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
-
-        foreach ($sth->fetch(\PDO::FETCH_ASSOC) as $key => $value) {
-            $result[$key] = round($value, 2);
+        $values = $this->getEntityManager()->nativeQuery($sql)->fetch(PDO::FETCH_ASSOC);
+        foreach ($values as $k => $value) {
+            $result[$k] = (float)$value;
         }
 
         return $result;
     }
 
     /**
-     * Get language key by field name
-     *
-     * @param string $fieldName
+     * Get completeness Select field in product
      *
      * @return string
-     * @throws Error
      */
-    protected function getLanguageKey(string $fieldName): string
+    protected function prepareCompletenessFieldsForSql(): string
     {
-        $result = 'default';
+        $selectFields[] = 'ROUND(AVG(' . Util::fromCamelCase('complete') . '), 2) AS `' . 'default' . '`';
 
-        $inputLanguages = $this->getConfig()->get('inputLanguageList') ?? [];
-
-        $str = substr($fieldName, -4);
-
-        foreach ($inputLanguages as $lang) {
-            $preparedLang = ucfirst(Util::toCamelCase(strtolower($lang)));
-
-            if ($preparedLang === $str) {
-                $result = $lang;
-            }
+        foreach ($this->getLanguages() as $local => $lang) {
+            $field = 'complete_' . $local;
+            $selectFields[] = 'ROUND(AVG(' . $field . '), 2) AS `' . $local . '`';
         }
 
-        return $result;
+        return implode($selectFields, ', ');
     }
 
     /**
-     * Get metadata
+     * Get languages
      *
-     * @return Metadata
-     * @throws Error
+     * @return array
      */
-    protected function getMetadata(): Metadata
+    protected function getLanguages(): array
     {
-        return $this->getContainer()->get('metadata');
+        $languages = [];
+        if (!empty($this->getConfig()->get('isMultilangActive'))) {
+            foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
+                $languages[$locale] = Util::toCamelCase(strtolower($locale), '_', true);
+            }
+        }
+        return $languages;
     }
 }

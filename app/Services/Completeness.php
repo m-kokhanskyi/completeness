@@ -23,506 +23,148 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\Core\Utils\Json;
-use Espo\Core\Utils\Util;
-use Espo\ORM\Entity;
-use Espo\ORM\EntityCollection;
 use Espo\Core\Exceptions\Error;
+use Espo\ORM\Entity;
+use Treo\Services\AbstractService;
 
 /**
  * Completeness service
  *
  * @author r.ratsun <r.ratsun@treolabs.com>
  */
-class Completeness extends \Treo\Services\AbstractService
+class Completeness extends AbstractService
 {
-    /**
-     * @var array
-     */
-    protected $multiLangFields = [
-        'varcharMultiLang',
-        'textMultiLang',
-        'enumMultiLang',
-        'multiEnumMultiLang',
-        'arrayMultiLang',
-        'wysiwygMultiLang'
-    ];
+    const LIMIT = 10000;
 
     /**
      * Update completeness
      *
      * @param Entity $entity
+     *
+     * @return array
+     * @throws Error
      */
-    public function runUpdateCompleteness(Entity $entity): void
+    public function runUpdateCompleteness(Entity $entity): array
     {
-        switch ($entity->getEntityType()) {
-            case 'Product':
-            case 'ProductAttributeValue':
-                $this->runUpdateProductCompleteness($entity);
-                break;
-            default:
-                $this->runUpdateCommonCompleteness($entity);
-                break;
-        }
+        /** @var CompletenessInterface $completeness */
+        $servicesName = $this->getNameServiceEntity($entity->getEntityName());
+
+        $completeness= new $servicesName();
+        $completeness->setContainer($this->getContainer());
+        $completeness->setEntity($entity);
+
+        $result = $completeness->calculate();
+        $completeness->saveEntity();
+
+        return $result;
     }
 
     /**
      * Recalc all completeness for entity instances
      *
      * @param string $entityName
+     * @param array $where
      *
      * @return void
-     */
-    public function recalcEntity(string $entityName): void
-    {
-        if (!empty($entities = $this->find($entityName)) && count($entities) > 0) {
-            foreach ($entities as $entity) {
-                // update completeness
-                $this->runUpdateCompleteness($entity);
-            }
-        }
-    }
-
-
-    /**
-     * @param string $productId
-     *
-     * @return array
      * @throws Error
      */
-    public function getChannelCompleteness(string $productId): array
+    public function recalcEntities(string $entityName, array $where = []): void
     {
-        // prepare result
-        $result = ['total' => 0, 'list' => []];
+        $count = $this->getEntityManager()
+            ->getRepository($entityName)
+            ->where($where)
+            ->count();
 
-        // get product
-        if (empty($product = $this->getProduct($productId))) {
-            return $result;
-        }
-
-        // get channels
-        if (empty($channels = $this->getChannels($product)) || count($channels) < 1) {
-            return $result;
-        };
-
-        // get requireds
-        if (empty($requireds = $this->getRequireds('Product'))) {
-            return $result;
-        }
-
-        foreach ($channels as $channel) {
-            $channelRequired = array_merge(
-                $requireds,
-                $this->getRequiredsScopeChannelAttributes($product, $channel->get('id'))
-            );
-
-            // prepare coefficient
-            $coefficient = 100 / count($channelRequired);
-
-            // prepare complete
-            $complete = 0;
-            foreach ($channelRequired as $field) {
-                if (!$this->isEmpty($product, $field)) {
-                    $complete += $coefficient;
-                }
-            }
-
-            $result['list'][] = [
-                'id' => $channel->get('id'),
-                'name' => $channel->get('name'),
-                'complete' => round($complete, 2)
-            ];
-
-        }
-        $result['total'] = count($result['list']);
-
-        return $result;
-    }
-
-    /**
-     * Update completeness for any entity
-     *
-     * @param Entity $entity
-     */
-    protected function runUpdateCommonCompleteness(Entity $entity): void
-    {
-        // get entity name
-        $entityName = $entity->getEntityType();
-
-        // prepare entity id
-        $entityId = $entity->get('id');
-
-        // prepare table name
-        $table = Util::camelCaseToUnderscore($entity->getEntityName());
-
-        $completeness['complete'] = 100;
-
-        foreach ($this->getLanguages() as $locale => $language) {
-            $completeness['complete_' . strtolower($locale)] = 100;
-        }
-
-        if (!empty($requireds = $this->getRequireds($entityName))) {
-            // prepare coefficient
-            $coefficient = 100 / count($requireds);
-
-            // prepare complete
-            $complete = 0;
-            foreach ($requireds as $field) {
-                if (!empty($entity->get($field))) {
-                    $complete += $coefficient;
-                }
-            }
-            $completeness['complete'] = $complete;
-
-            /**
-             * For multilang fields
-             */
-            if ($this->getConfig()->get('isMultilangActive')
-                && !empty($multilangRequireds = $this->getRequireds($entityName, true))) {
-                // prepare coefficient
-                $multilangCoefficient = 100 / count($multilangRequireds);
-
-                foreach ($this->getLanguages() as $locale => $language) {
-                    $multilangComplete = 0;
-                    foreach ($multilangRequireds as $field) {
-                        if (!empty($entity->get("{$field}{$language}"))) {
-                            $multilangComplete += $multilangCoefficient;
-                        }
-                    }
-                    $completeness['complete' . $language] = $multilangComplete;
-                }
-            }
-
-        }
-
-        // update activation
-        if (!empty($entity->get('isActive')) && round($completeness['complete']) < 100) {
-            $entity->set('isActive', 0);
-        }
-
-        // update db
-        foreach ($completeness as $field => $complete) {
-            $entity->set($field, round($complete, 2));
-        }
-
-        $this->getEntityManager()->saveEntity($entity);
-    }
-
-    /**
-     * Update completeness for Product entity
-     *
-     * @param Entity $entity
-     */
-    protected function runUpdateProductCompleteness(Entity $entity): void
-    {
-        // prepare product
-        $product = ($entity->getEntityType() == 'Product') ? $entity : $entity->get('product');
-
-        // prepare productId
-        $productId = (string)$product->get('id');
-
-        // prepare complete
-        $complete = 0;
-
-        // set complete
-        $completeness['complete'] = 100;
-        foreach ($this->getLanguages() as $locale => $language) {
-            $completeness['complete_' . strtolower($locale)] = 100;
-        }
-
-        // get requireds
-        $requireds = array_merge(
-            $this->getRequireds('Product'),
-            $this->getRequiredsScopeGlobalAttributes($product)
-        );
-
-        if (!empty($requireds)) {
-            // prepare coefficient
-            $coefficient = 100 / count($requireds);
-
-            foreach ($requireds as $field) {
-                if (!$this->isEmpty($product, $field)) {
-                    $complete += $coefficient;
-                }
-            }
-            $completeness['complete'] = $complete;
-
-            /**
-             * For multilang fields
-             */
-            if ($this->getConfig()->get('isMultilangActive')) {
-                // get requireds
-                $multilangRequireds = array_merge(
-                    $this->getRequireds('Product', true),
-                    $this->getRequiredsScopeGlobalAttributes($product, true)
-                );
-
-                // prepare coefficient
-                $multilangCoefficient = 100 / count($multilangRequireds);
-
-                foreach ($this->getLanguages() as $locale => $language) {
-                    $multilangComplete = 0;
-                    foreach ($multilangRequireds as $field) {
-                        if (!$this->isEmpty($product, $field, $language)) {
-                            $multilangComplete += $multilangCoefficient;
-                        }
-                    }
-                    $completeness['complete' . $language] = $multilangComplete;
-                }
-            }
-        }
-
-        // update activation
-        if (!empty($product->get('isActive')) && round($completeness['complete']) < 100) {
-            $entity->set('isActive', 0);
-        }
-
-        // update db
-        foreach ($completeness as $field => $complete) {
-            $entity->set($field, round($complete, 2));
-        }
-
-        $this->getEntityManager()->saveEntity($entity);
-    }
-
-    /**
-     * Get requireds
-     *
-     * @param string $entityName
-     * @param bool $isMultilang
-     *
-     * @return array
-     */
-    protected function getRequireds(string $entityName, bool $isMultilang = false): array
-    {
-        // prepare result
-        $result = [];
-
-        // get entity defs
-        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs.' . $entityName . '.fields');
-
-        foreach ($entityDefs as $name => $row) {
-            if ($isMultilang) {
-                if (!empty($row['required']) && !empty($row['isMultilang'])) {
-                    $result[] = $name;
+        if ($count > 0) {
+            $max = (int)$this->getConfig()->get('webMassUpdateMax', 200);
+            if ($count < $max) {
+                $entities = $this->getEntityManager()->getRepository($entityName)->where($where)->find();
+                foreach ($entities as $entity) {
+                    $this->runUpdateCompleteness($entity);
                 }
             } else {
-                if (!empty($row['required'])) {
-                    $result[] = $name;
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get required attributes
-     *
-     * @param Entity $product
-     * @param bool $isMultilang
-     *
-     * @return array
-     */
-    protected function getRequiredsScopeGlobalAttributes(Entity $product, bool $isMultilang = false): array
-    {
-        // prepare data
-        $where = [
-            'productId' => $product->get('id'),
-            'productFamilyAttribute.isRequired' => true,
-            'productFamilyAttribute.scope' => 'Global'
-        ];
-
-        if ($isMultilang) {
-            $where['attribute.type'] = $this->multiLangFields;
-        }
-
-        // get required scope Global attributes
-        $attributes = $this
-            ->getEntityManager()
-            ->getRepository('ProductAttributeValue')
-            ->distinct()
-            ->join(['productFamilyAttribute', 'attribute'])
-            ->where($where)
-            ->find();
-
-        // prepare result
-        $result = [];
-
-        if (count($attributes) > 0) {
-            foreach ($attributes as $attribute) {
-                if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
-                    $result[] = $attribute;
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Get required attributes with scope Channel
-     *
-     * @param Entity $product
-     * @param string $channelId
-     *
-     * @return array
-     */
-    protected function getRequiredsScopeChannelAttributes(Entity $product, string $channelId) {
-        $attributes = $this
-            ->getEntityManager()
-            ->getRepository('ProductAttributeValue')
-            ->distinct()
-            ->join(['productFamilyAttribute'])
-            ->where([
-                'productId' => $product->get('id'),
-                'productFamilyAttribute.isRequired' => true
-            ])
-            ->find();
-
-        // prepare result
-        $result = [];
-
-        if (count($attributes) > 0) {
-            foreach ($attributes as $attribute) {
-                if (!in_array($attribute->get('id'), $this->getExcludedAttributes($product))) {
-                    if ($attribute->get('scope') == 'Global' && !isset($result[$attribute->get('attributeId')])) {
-                        $result[$attribute->get('attributeId')] = $attribute;
-                    } elseif ($attribute->get('scope') == 'Channel'
-                        && in_array($channelId, array_column($attribute->get('channels')->toArray(), 'id'))) {
-                        $result[$attribute->get('attributeId')] = $attribute;
+                for ($j = 0; $j <= $count; $j += self::LIMIT) {
+                    $entities = $this->selectLimitById($entityName, self::LIMIT, $j, $where);
+                    if (count($entities) > 0) {
+                        $chunks = array_chunk($entities, $max);
+                        foreach ($chunks as $chunk) {
+                            $name = 'Updated completeness for ' . $entityName;
+                            $this->qmPush(
+                                $name,
+                                'QueueManagerMassUpdateComplete',
+                                ['entitiesIds' => array_column($chunk, 'id'), 'entityName' => $entityName]
+                            );
+                        }
                     }
                 }
             }
         }
-
-        return array_values($result);
-    }
-
-    /**
-     * Get languages
-     *
-     * @return array
-     */
-    protected function getLanguages(): array
-    {
-        $languages = [];
-
-        if (!empty($this->getConfig()->get('isMultilangActive'))) {
-            foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
-                $languages[$locale] = Util::toCamelCase(strtolower($locale), '_', true);
-            }
-        }
-
-        return $languages;
     }
 
     /**
      * @param string $entityName
-     *
-     * @return EntityCollection
-     */
-    protected function find(string $entityName): EntityCollection
-    {
-        return $this->getEntityManager()->getRepository($entityName)->find();
-    }
-
-    /**
-     * @param Entity $entity
-     */
-    protected function saveEntity(Entity $entity): void
-    {
-        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
-    }
-
-    /**
-     * @param string $productId
-     *
-     * @return Entity|null
-     * @throws Error
-     */
-    protected function getProduct(string $productId): ?Entity
-    {
-        return $this->getEntityManager()->getEntity('Product', $productId);
-    }
-
-    /**
-     * @param string $sql
-     */
-    private function execute(string $sql): void
-    {
-        $sth = $this->getEntityManager()->getPDO()->prepare($sql);
-        $sth->execute();
-    }
-
-    /**
-     * @param Entity $entity
-     * @param mixed $value
-     * @param string $language
      *
      * @return bool
      */
-    private function isEmpty(Entity $entity, $value, string $language = ''): bool
+    public function hasCompleteness(string $entityName): bool
     {
-        $result = true;
+        $entityName = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get(['scopes', $entityName, 'completeness', 'replacement'], $entityName);
 
-        if ((is_string($value) && !empty($entity->get($value . $language)))) {
-            $result = false;
-        } elseif ($value instanceof Entity) {
-            $type = $value->get('attribute')->get('type');
-
-            if (in_array($type, ['array', 'arrayMultiLang', 'multiEnum', 'multiEnumMultiLang'])) {
-                $attributeValue = Json::decode($value->get('value' . $language), true);
-            } else {
-                $attributeValue = $value->get('value' . $language);
-            }
-
-            if (!empty($attributeValue)) {
-                $result = false;
-            }
-        }
-
-        return $result;
+        return !empty($this->getContainer()->get('metadata')->get("scopes.$entityName.hasCompleteness"));
     }
 
     /**
-     * @param Entity $product
-     *
-     * @return EntityCollection
+     * @param string $entityName
+     * @return string
      */
-    protected function getChannels(Entity $product): EntityCollection
+    public function getNameServiceEntity(string $entityName): string
     {
-        if ($product->get('type') == 'productVariant'
-            && !in_array('channels', $product->get('data')->customRelations)) {
-            $result = $product->get('configurableProduct')->get('channels');
-        } else {
-            $result = $product->get('channels');
+        $result = CommonCompleteness::class;
+        $service = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get(['scopes', $entityName, 'completeness', 'service']);
+        if (!empty($service) && class_exists($service) && new $service instanceof CompletenessInterface) {
+            $result = $service;
         }
 
         return $result;
     }
 
     /**
-     * @param Entity $product
+     * @param string $entityName
      *
+     * @param int $limit
+     * @param int $offset
+     * @param array $where
      * @return array
      */
-    protected function getExcludedAttributes(Entity $product): array
+    protected function selectLimitById(string $entityName, $limit = 2000, $offset = 0, array $where = []): array
     {
-        $result = [];
+        return $this->getEntityManager()
+            ->getRepository($entityName)
+            ->select(['id'])
+            ->where($where)
+            ->limit($offset, $limit)
+            ->find()
+            ->toArray();
+    }
 
-        if ($product->get('type') == 'configurableProduct') {
-            $variants = $product->get('productVariants');
-
-            if (count($variants) > 0) {
-                foreach ($variants as $variant) {
-                    $result = array_merge($result, array_column($variant->get('data')->attributes, 'id'));
-                }
-
-                $result = array_unique($result);
-            }
-        }
-
-        return $result;
+    /**
+     * @param string $name
+     * @param string $serviceName
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function qmPush(string $name, string $serviceName, array $data): bool
+    {
+        return $this
+            ->getContainer()
+            ->get('queueManager')
+            ->push($name, $serviceName, $data);
     }
 }

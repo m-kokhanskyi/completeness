@@ -25,17 +25,6 @@ Espo.define('completeness:views/product/record/panels/parts/channels-completenes
 
         template: 'completeness:product/record/panels/parts/channels-completeness',
 
-        events: {
-            'click label[data-name="channel-complete"]': function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                let label = $(e.currentTarget);
-                label.find('.caret').toggleClass('caret-up');
-                let id = label.data('id');
-                this.$el.find(`.multilang-labels[data-id="${id}"]`).toggleClass('hidden');
-            }
-        },
-
         setup() {
             Dep.prototype.setup.call(this);
 
@@ -59,39 +48,25 @@ Espo.define('completeness:views/product/record/panels/parts/channels-completenes
         },
 
         data() {
-            let langs = this.getConfig().get('inputLanguageList') || [];
             let channelData = [];
 
             this.collection.each(model => {
                 channelData.push({
                     id: model.id,
                     name: model.get('name'),
-                    value: this.roundNumber(model.get('complete')),
-                    valueLabel: this.formatNumber(this.roundNumber(model.get('complete'))),
-                    progressBarClass: this.getProgressBarClass(model.get('complete')),
-                    langs: langs.map(lang => {
-                        return {
-                            name: lang,
-                            key: `complete${this.formatLanguage(lang)}`
-                        };
-                    }).filter(lang => model.has(lang.key)).map(lang => {
-                        return {
-                            key: lang.key,
-                            name: lang.name,
-                            value: this.roundNumber(model.get(lang.key)),
-                            valueLabel: this.formatNumber(this.roundNumber(model.get(lang.key))),
-                            progressBarClass: this.getProgressBarClass(model.get(lang.key)),
-                        };
-                    })
+                    value: this.getValueForDisplay(model),
+                    progressBarValue: this.roundNumber(model.get('complete'))
                 });
             });
+
             return {
                 channelData: channelData
             };
         },
 
-        formatLanguage(lang) {
-            return lang.split('_').map(part => `${part[0].toUpperCase()}${part.slice(1).toLowerCase()}`).join('');
+        getValueForDisplay: function (model) {
+            var value = isNaN(model.get('complete')) ? null : model.get('complete');
+            return this.formatNumber(value);
         },
 
         roundNumber(value) {
@@ -105,16 +80,6 @@ Espo.define('completeness:views/product/record/panels/parts/channels-completenes
                 return parts.join(this.decimalMark);
             }
             return '';
-        },
-
-        getProgressBarClass(value) {
-            if(value === 100) {
-                return 'progress-bar-success';
-            } else if (value === 0) {
-                return 'progress-bar-danger';
-            } else {
-                return 'progress-bar-warning';
-            }
         }
 
     })

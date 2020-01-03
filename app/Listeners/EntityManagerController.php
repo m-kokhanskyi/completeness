@@ -66,10 +66,8 @@ class EntityManagerController extends AbstractListener
 
                 // recalc complete param
                 $this
-                    ->getContainer()
-                    ->get('serviceFactory')
-                    ->create('Completeness')
-                    ->recalcEntity($scope);
+                    ->getService('Completeness')
+                    ->recalcEntities($scope);
             }
         }
     }
@@ -96,6 +94,18 @@ class EntityManagerController extends AbstractListener
 
         // save
         $this->getContainer()->get('metadata')->save();
+
+        $data = $this
+            ->getContainer()
+            ->get('metadata')
+            ->get("scopes.{$scope}");
+
+        $filters = json_decode($this->getContainer()->get('layout')->get($scope, 'filters'), true);
+        if ($value && !in_array('complete', $filters)) {
+            $filters[] = 'complete';
+            $this->getContainer()->get('layout')->set($filters, $scope, 'filters');
+            $this->getContainer()->get('layout')->save();
+        }
     }
 
     /**
