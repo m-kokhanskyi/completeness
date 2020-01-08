@@ -36,7 +36,7 @@ use Treo\Listeners\AbstractListener;
  */
 class Metadata extends AbstractListener
 {
-    const CONFIG_IS_ACTIVE = [
+    public const CONFIG_IS_ACTIVE = [
         'type' => 'bool',
         'default' => false,
         'layoutFiltersDisabled' => true,
@@ -70,7 +70,11 @@ class Metadata extends AbstractListener
         if (!empty($data['completeness'])) {
             foreach ($data['completeness'] as $key => $item) {
                 if (empty($data['dashlets'][$key]) && !empty($item['isDashlet'])) {
-                    $data['dashlets'][$key] = $item;
+                    if (!is_null($item['entity']) && $data['scopes'][$item['entity']]['hasCompleteness'] === true) {
+                        $data['dashlets'][$key] = $item;
+                    } elseif (is_null($item['entity'])) {
+                        $data['dashlets'][$key] = $item;
+                    }
                 }
             }
         }

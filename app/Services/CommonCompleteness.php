@@ -27,6 +27,7 @@ use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityCollection;
+use Treo\Core\Container;
 use Treo\Core\Utils\Condition\Condition;
 use Treo\Services\AbstractService;
 
@@ -96,6 +97,31 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
     public function saveEntity(): void
     {
         $this->getEntityManager()->saveEntity($this->entity, ['skipAll' => true]);
+    }
+
+    /**
+     * @param Container $container
+     * @param string $scope
+     * @param bool $value
+     */
+    public static function setHasCompleteness(Container $container, string $scope, bool $value): void
+    {
+        // prepare data
+        $data = $container->get('metadata')->get("scopes.{$scope}");
+        //set hasCompleteness
+        $data['hasCompleteness'] = $value;
+
+        $container->get('metadata')->set("scopes", $scope, $data);
+
+        // save
+        $container->get('metadata')->save();
+
+        $filters = json_decode($container->get('layout')->get($scope, 'filters'), true);
+        if ($value && !in_array('complete', $filters, true)) {
+            $filters[] = 'complete';
+            $container->get('layout')->set($filters, $scope, 'filters');
+            $container->get('layout')->save();
+        }
     }
 
     /**

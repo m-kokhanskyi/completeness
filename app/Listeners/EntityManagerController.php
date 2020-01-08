@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace Completeness\Listeners;
 
+use Completeness\Services\CommonCompleteness;
+use Completeness\Services\CompletenessInterface as ICompleteness;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
 
@@ -80,32 +82,15 @@ class EntityManagerController extends AbstractListener
      */
     protected function setHasCompleteness(string $scope, bool $value): void
     {
-        // prepare data
-        $data = $this
-            ->getContainer()
-            ->get('metadata')
-            ->get("scopes.{$scope}");
-        $data['hasCompleteness'] = $value;
-
-        $this
-            ->getContainer()
-            ->get('metadata')
-            ->set("scopes", $scope, $data);
-
-        // save
-        $this->getContainer()->get('metadata')->save();
-
-        $data = $this
-            ->getContainer()
-            ->get('metadata')
-            ->get("scopes.{$scope}");
-
-        $filters = json_decode($this->getContainer()->get('layout')->get($scope, 'filters'), true);
-        if ($value && !in_array('complete', $filters)) {
-            $filters[] = 'complete';
-            $this->getContainer()->get('layout')->set($filters, $scope, 'filters');
-            $this->getContainer()->get('layout')->save();
+        $metadata = $this->getContainer()->get('metadata');
+        /** @var ICompleteness $service */
+        $service = CommonCompleteness::class;
+        if (!empty($class = $metadata->get(['scopes', $scope, 'completeness', 'service']))
+            && class_exists($class) && new $class instanceof ICompleteness) {
+            $service = $class;
         }
+
+        $service::setHasCompleteness($this->getContainer(), $scope, $value);
     }
 
     /**
