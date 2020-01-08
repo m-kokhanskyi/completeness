@@ -23,7 +23,9 @@ declare(strict_types=1);
 
 namespace Completeness\Migrations;
 
+use Completeness\Services\ProductCompleteness;
 use Espo\ORM\EntityCollection;
+use Treo\Composer\PostUpdate;
 use Treo\Core\Migration\AbstractMigration;
 use Treo\Core\Utils\Auth;
 
@@ -35,6 +37,7 @@ use Treo\Core\Utils\Auth;
 class V1Dot12Dot0 extends AbstractMigration
 {
     public const LIMIT = 10000;
+
     /**
      * Up to current
      */
@@ -42,11 +45,21 @@ class V1Dot12Dot0 extends AbstractMigration
     {
         (new Auth($this->getContainer()))->useNoAuth();
 
-        $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
-        $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
-        foreach ($defs as $entity => $row) {
-            if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity'])) {
-                $this->recalcEntities($entity);
+        // rebuild DB
+        $this->getContainer()->get('dataManager')->rebuild();
+
+        $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
+        if (method_exists($service, 'runUpdateCompleteness')) {
+            $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
+            $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
+            foreach ($defs as $entity => $row) {
+                if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity']) && $entity !== 'ProductAttributeValue') {
+                    $this->recalcEntities($entity);
+                }
+            }
+
+            if (!empty($scopes['Product']['hasCompleteness']) && !empty($scopes['Product']['entity'])) {
+                ProductCompleteness::setHasCompleteness($this->getContainer(), 'ProductAttributeValue', true);
             }
         }
     }
@@ -56,15 +69,14 @@ class V1Dot12Dot0 extends AbstractMigration
      */
     protected function recalcEntities(string $entityName): void
     {
+        $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
         $count = $this->getEntityManager()->getRepository($entityName)->count();
+        PostUpdate::renderLine('Update complete fields in ' . $entityName);
         if ($count > 0) {
             for ($j = 0; $j <= $count; $j += self::LIMIT) {
                 $entities = $this->selectLimitById($entityName, self::LIMIT, $j);
                 foreach ($entities as $entity) {
-                    $this->getContainer()
-                        ->get('serviceFactory')
-                        ->create('Completeness')
-                        ->runUpdateCompleteness($entity);
+                    $service->runUpdateCompleteness($entity);
                 }
             }
         }

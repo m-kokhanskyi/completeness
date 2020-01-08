@@ -34,7 +34,7 @@ use Treo\Services\AbstractService;
  */
 class Completeness extends AbstractService
 {
-    const LIMIT = 10000;
+    public const LIMIT = 10000;
 
     /**
      * Update completeness
@@ -42,7 +42,6 @@ class Completeness extends AbstractService
      * @param Entity $entity
      *
      * @return array
-     * @throws Error
      */
     public function runUpdateCompleteness(Entity $entity): array
     {
