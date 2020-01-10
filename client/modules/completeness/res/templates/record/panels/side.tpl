@@ -1,6 +1,4 @@
-<div class="row">
-    <div class="channels-completeness">{{{channelsCompleteness}}}</div>
-</div>
+{{#if fieldList.length}}
 <div class="row">
     {{#each fieldList}}
     <div class="cell form-group col-sm-6 col-md-12{{#if hidden}} hidden-cell{{/if}}" data-name="{{name}}">
@@ -8,8 +6,9 @@
             <span class="label-text">{{{prop ../completenessLabels name}}}</span>
         </label>
         <div class="field{{#if hidden}} hidden{{/if}}" data-name="{{name}}">
-            {{{var viewKey ../this}}}
+        {{{var viewKey ../this}}}
         </div>
     </div>
     {{/each}}
 </div>
+{{/if}}

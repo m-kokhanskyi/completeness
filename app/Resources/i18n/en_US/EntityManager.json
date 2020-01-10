@@ -3,7 +3,7 @@
     "Complete": "Complete"
   },
   "fields": {
-    "hasCompleteness": "Complete"
+    "hasCompleteness": "Completeness"
   },
   "tooltips": {
     "hasCompleteness": "The percentage of completed required fields"

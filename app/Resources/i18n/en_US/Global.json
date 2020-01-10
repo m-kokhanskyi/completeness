@@ -1,12 +1,13 @@
 {
     "fields": {
-        "complete": "Complete",
-        "completeGlobal": "Global complete",
-        "completeTotal": "Total complete",
+        "complete": "Main locale",
+        "completeGlobal": "Global completeness",
+        "completeTotal": "Total completeness",
         "isActive": "Is active"
     },
     "labels": {
-        "Complete": "Complete"
+        "Completeness": "Completeness",
+        "Locale": "Locale"
     },
     "dashlets": {
         "CompletenessOverview": "Completeness Overview",
