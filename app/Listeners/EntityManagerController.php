@@ -38,18 +38,28 @@ class EntityManagerController extends AbstractListener
     /**
      * @param Event $event
      */
-    public function beforeActionUpdateEntity(Event $event)
+    public function beforeActionUpdateEntity(Event $event): void
     {
         // run recalc completeness if it needs
         $this->recalcCompleteness($event->getArguments());
     }
 
     /**
+     * @param Event $event
+     */
+    public function afterActionCreateEntity(Event $event): void
+    {
+        // run recalc completeness if it needs
+        $this->recalcCompleteness($event->getArguments(), false);
+    }
+
+    /**
      * Run recalc completeness if it needs
      *
      * @param array $data
+     * @param bool $isRecalc
      */
-    protected function recalcCompleteness(array $data): void
+    protected function recalcCompleteness(array $data, bool $isRecalc = true): void
     {
         // prepare data
         $scope = $data['data']->name;
@@ -66,10 +76,12 @@ class EntityManagerController extends AbstractListener
                 // reload entity manager
                 $this->getContainer()->reload('entityManager');
 
-                // recalc complete param
-                $this
-                    ->getService('Completeness')
-                    ->recalcEntities($scope);
+                if ($isRecalc) {
+                    // recalc complete param
+                    $this
+                        ->getService('Completeness')
+                        ->recalcEntities($scope);
+                }
             }
         }
     }
