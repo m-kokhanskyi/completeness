@@ -35,7 +35,7 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
 
             const completenessPanelDefs = {
                 name: 'complete',
-                label: 'Complete',
+                label: 'Completeness',
                 view: view,
                 fieldList: this.getCompleteFields()
             };

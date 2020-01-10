@@ -1,12 +1,13 @@
 {
     "fields": {
-        "complete": "Vollständigkeit",
+        "complete": "Hauptsprache",
         "completeGlobal": "Vollständigkeit Global",
         "completeTotal": "Vollständigkeit insgesamt",
         "isActive": "Aktiv"
     },
     "labels": {
-        "Complete": "Vollständigkeit"
+        "Completeness": "Vollständigkeit",
+        "Locale": "Sprache"
     },
     "dashlets": {
         "CompletenessOverview": "Vollständigkeit Übersicht",

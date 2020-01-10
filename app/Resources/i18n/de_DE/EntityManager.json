@@ -3,7 +3,7 @@
     "Complete": "Ausfüllen"
   },
   "fields": {
-    "hasCompleteness": "Ausfüllen"
+    "hasCompleteness": "Vollständigkeit"
   },
   "tooltips": {
     "hasCompleteness": "Prozent von ausgefüllten Feldern"

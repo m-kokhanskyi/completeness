@@ -20,6 +20,31 @@
 
 Espo.define('completeness:views/record/panels/complete-side', 'views/record/panels/side', function (Dep) {
 
-    return Dep.extend({});
+    return Dep.extend({
+
+        template: 'completeness:record/panels/side',
+
+        data() {
+            return _.extend({
+                completenessLabels: this.getCompletenessLabels()
+            }, Dep.prototype.data.call(this));
+        },
+
+        getCompletenessLabels() {
+            const labels = {};
+
+            this.getFieldList().forEach(field => {
+                const locale = this.model.getFieldParam(field.name, 'multilangLocale');
+                if (locale) {
+                    labels[field.name] = `${this.translate('Locale', 'labels', 'Global')} &#8250; ${locale}`;
+                } else {
+                    labels[field.name] = this.translate(field.name, 'fields', this.model.name);
+                }
+            });
+
+            return labels;
+        }
+
+    });
 });
 
