@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\Core\Exceptions\Error;
 use Espo\ORM\Entity;
 use Treo\Services\AbstractService;
 
@@ -64,10 +63,10 @@ class Completeness extends AbstractService
      * @param string $entityName
      * @param array $where
      *
+     * @param bool $useQm
      * @return void
-     * @throws Error
      */
-    public function recalcEntities(string $entityName, array $where = []): void
+    public function recalcEntities(string $entityName, array $where = [], bool $useQm = false): void
     {
         $count = $this->getEntityManager()
             ->getRepository($entityName)
@@ -76,7 +75,7 @@ class Completeness extends AbstractService
 
         if ($count > 0) {
             $max = (int)$this->getConfig()->get('webMassUpdateMax', 200);
-            if ($count < $max) {
+            if (!$useQm && $count < $max) {
                 $entities = $this->getEntityManager()->getRepository($entityName)->where($where)->find();
                 foreach ($entities as $entity) {
                     $this->runUpdateCompleteness($entity);

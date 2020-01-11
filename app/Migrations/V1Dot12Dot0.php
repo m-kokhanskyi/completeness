@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Migrations;
 
-use Completeness\Services\ProductCompleteness;
+use Completeness\Services\Completeness;
 use Espo\ORM\EntityCollection;
 use Treo\Composer\PostUpdate;
 use Treo\Core\Migration\AbstractMigration;
@@ -48,19 +48,20 @@ class V1Dot12Dot0 extends AbstractMigration
         // rebuild DB
         $this->getContainer()->get('dataManager')->rebuild();
 
+        $skipEntities = ['ProductAttributeValue', 'Product'];
+
         $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
         if (method_exists($service, 'runUpdateCompleteness')) {
             $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
             $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
             foreach ($defs as $entity => $row) {
-                if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity']) && $entity !== 'ProductAttributeValue') {
+                if (!empty($scopes[$entity]['hasCompleteness'])
+                    && !empty($scopes[$entity]['entity']) && !in_array($entity, $skipEntities)
+                ) {
                     $this->recalcEntities($entity);
                 }
             }
 
-            if (!empty($scopes['Product']['hasCompleteness']) && !empty($scopes['Product']['entity'])) {
-                ProductCompleteness::setHasCompleteness($this->getContainer(), 'ProductAttributeValue', true);
-            }
         }
     }
 
@@ -69,6 +70,7 @@ class V1Dot12Dot0 extends AbstractMigration
      */
     protected function recalcEntities(string $entityName): void
     {
+        /** @var Completeness $service */
         $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
         $count = $this->getEntityManager()->getRepository($entityName)->count();
         PostUpdate::renderLine('Update complete fields in ' . $entityName);
