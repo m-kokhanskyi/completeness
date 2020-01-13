@@ -76,9 +76,7 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
         $completeness = array_merge($completeness, $this->calculationCompleteMultiLang());
         $completeness['completeTotal'] = $this->calculationTotalComplete();
 
-        $this->updateActive($completeness['complete']);
         $this->setFieldsCompletenessInEntity($completeness);
-        $completeness['isActive'] = $this->entity->get('isActive');
 
         return $completeness;
     }
@@ -233,17 +231,6 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
         }
 
         return $result;
-    }
-
-    /**
-     * @param $complete
-     */
-    protected function updateActive($complete): void
-    {
-        $isActive = $this->entity->get('isActive');
-        if (!empty($isActive) && round($complete) < 100) {
-            $this->entity->set('isActive', 0);
-        }
     }
 
     /**
