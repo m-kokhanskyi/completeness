@@ -40,7 +40,7 @@ class FieldManagerController extends AbstractListener
     {
         $scope = $event->getArgument('params')['scope'];
         if ($event->getArgument('data')->required && $this->getHasCompleteness($scope)) {
-            $this->getService('Completeness')->recalcEntities($scope);
+            $this->recalcEntities($scope);
         }
     }
 
@@ -51,7 +51,7 @@ class FieldManagerController extends AbstractListener
     {
         $scope = $event->getArgument('params')['scope'];
         if ($this->getHasCompleteness($scope)) {
-            $this->getService('Completeness')->recalcEntities($scope);
+            $this->recalcEntities($scope);
         };
     }
 
@@ -62,7 +62,7 @@ class FieldManagerController extends AbstractListener
     {
         $scope = $event->getArgument('params')['scope'];
         if ($this->getHasCompleteness($scope)) {
-            $this->getService('Completeness')->recalcEntities($scope);
+            $this->recalcEntities($scope);
         };
     }
 
@@ -73,8 +73,16 @@ class FieldManagerController extends AbstractListener
     {
         $scope = $event->getArgument('params')['scope'];
         if ($this->getHasCompleteness($scope)) {
-            $this->getService('Completeness')->recalcEntities($scope);
+            $this->recalcEntities($scope);
         }
+    }
+
+    /**
+     * @param string $scope
+     */
+    protected function recalcEntities(string $scope): void
+    {
+        $this->getService('Completeness')->recalcEntities($scope, [], true);
     }
 
     /**
