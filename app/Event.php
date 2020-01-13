@@ -58,10 +58,7 @@ class Event extends AbstractEvent
     /**
      * After module delete event
      */
-    public function afterDelete(): void
-    {
-        parent::afterDelete();
-    }
+    public function afterDelete(): void {}
 
     /**
      * @param string $entityName
