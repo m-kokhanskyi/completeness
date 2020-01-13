@@ -25,12 +25,7 @@ Espo.define('completeness:views/record/detail', 'class-replace!completeness:view
             if (this.isNew) {
                 this.notify('Created', 'success');
             } else {
-                if (this.model.hasChanged('isActive') && this.model.get('isActive') === 0) {
-                    let msg = this.translate('activationFailed', 'exceptions', 'Completeness');
-                    this.notify(msg, 'error');
-                } else {
-                    this.notify('Saved', 'success');
-                }
+                this.notify('Saved', 'success');
             }
             this.enableButtons();
             this.setIsNotChanged();

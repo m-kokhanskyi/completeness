@@ -61,7 +61,6 @@ class V1Dot12Dot0 extends AbstractMigration
                     $this->recalcEntities($entity);
                 }
             }
-
         }
     }
 

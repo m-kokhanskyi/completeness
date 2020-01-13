@@ -2,8 +2,7 @@
     "fields": {
         "complete": "Main locale",
         "completeGlobal": "Global completeness",
-        "completeTotal": "Total completeness",
-        "isActive": "Is active"
+        "completeTotal": "Total completeness"
     },
     "labels": {
         "Completeness": "Completeness",

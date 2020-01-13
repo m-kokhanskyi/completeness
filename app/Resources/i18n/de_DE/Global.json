@@ -2,8 +2,7 @@
     "fields": {
         "complete": "Hauptsprache",
         "completeGlobal": "Vollständigkeit Global",
-        "completeTotal": "Vollständigkeit insgesamt",
-        "isActive": "Aktiv"
+        "completeTotal": "Vollständigkeit insgesamt"
     },
     "labels": {
         "Completeness": "Vollständigkeit",

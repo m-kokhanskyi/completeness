@@ -55,12 +55,7 @@ Espo.define('completeness:views/fields/is-active', 'views/fields/bool', function
                 success: function () {
                     self.trigger('after:save');
                     model.trigger('after:save');
-                    if (self.model.hasChanged('isActive') && self.model.get('isActive') === 0) {
-                        let msg = self.translate('activationFailed', 'exceptions', 'Completeness');
-                        self.notify(msg, 'error');
-                    } else {
-                        self.notify('Saved', 'success');
-                    }
+                    this.notify('Saved', 'success');
                 },
                 error: function () {
                     self.notify('Error occured', 'error');
