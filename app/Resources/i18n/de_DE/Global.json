@@ -1,6 +1,6 @@
 {
     "fields": {
-        "complete": "Hauptsprache",
+        "complete": "Vollständigkeit",
         "completeGlobal": "Vollständigkeit Global",
         "completeTotal": "Vollständigkeit insgesamt",
         "isActive": "Aktiv"
