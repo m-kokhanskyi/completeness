@@ -51,7 +51,7 @@ class V1Dot12Dot2 extends AbstractMigration
         if (method_exists($service, 'runUpdateCompleteness')) {
             $scopes = $this->getContainer()->get('metadata')->get(['scopes'], []);
             if (!empty($scopes['Product']['hasCompleteness'])&& !empty($scopes['Product']['entity'])) {
-                $this->recalcEntities('Product');
+                $this->recalcEntitiesUp('Product');
             }
         }
     }
@@ -59,7 +59,7 @@ class V1Dot12Dot2 extends AbstractMigration
     /**
      * @param string $entityName
      */
-    protected function recalcEntities(string $entityName): void
+    protected function recalcEntitiesUp(string $entityName): void
     {
         // prepare data
         $fields = [];
@@ -110,5 +110,47 @@ class V1Dot12Dot2 extends AbstractMigration
             ->getRepository($entityName)
             ->limit($offset, $limit)
             ->find();
+    }
+
+    /**
+     * @throws \Espo\Core\Exceptions\Error
+     */
+    public function down(): void
+    {
+        (new Auth($this->getContainer()))->useNoAuth();
+
+        // rebuild DB
+        $this->getContainer()->get('dataManager')->rebuild();
+
+
+        $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
+        if (method_exists($service, 'runUpdateCompleteness')) {
+            $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
+            $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
+            foreach ($defs as $entity => $row) {
+                if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity']) ) {
+                    $this->recalcEntitiesDown($entity);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $entityName
+     */
+    protected function recalcEntitiesDown(string $entityName): void
+    {
+        /** @var Completeness $service */
+        $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
+        $count = $this->getEntityManager()->getRepository($entityName)->count();
+        PostUpdate::renderLine('Update complete fields in ' . $entityName);
+        if ($count > 0) {
+            for ($j = 0; $j <= $count; $j += self::LIMIT) {
+                $entities = $this->selectLimitById($entityName, self::LIMIT, $j);
+                foreach ($entities as $entity) {
+                    $service->runUpdateCompleteness($entity);
+                }
+            }
+        }
     }
 }
