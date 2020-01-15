@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace Completeness;
 
+use Completeness\Services\CommonCompleteness;
+use Completeness\Services\CompletenessInterface as ICompleteness;
 use Treo\Core\ModuleManager\AbstractEvent;
 use Treo\Core\Utils\Auth;
 
@@ -46,6 +48,17 @@ class Event extends AbstractEvent
 
         foreach ($entityDefs as $entity => &$row) {
             if ($this->hasCompleteness($entity)) {
+                $metadata = $this->getContainer()->get('metadata');
+                /** @var ICompleteness $service */
+                $service = CommonCompleteness::class;
+                if (!empty($class = $metadata->get(['scopes', $entity, 'completeness', 'service']))
+                    && class_exists($class) && new $class instanceof ICompleteness) {
+                    $service = $class;
+                }
+
+                $service::setHasCompleteness($this->getContainer(), $entity, false);
+                $service::setHasCompleteness($this->getContainer(), $entity, true);
+
                 $this
                     ->getContainer()
                     ->get('serviceFactory')

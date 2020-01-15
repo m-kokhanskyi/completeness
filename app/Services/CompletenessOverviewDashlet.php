@@ -144,7 +144,7 @@ class CompletenessOverviewDashlet extends AbstractService implements DashletInte
     protected function getLanguages(): array
     {
         $languages = [];
-        if (!empty($this->getConfig()->get('isMultilangActive'))) {
+        if (!empty($this->getConfig()->get('isMultilangActive', false))) {
             foreach ($this->getConfig()->get('inputLanguageList', []) as $locale) {
                 $languages[$locale] = Util::toCamelCase(strtolower($locale), '_', true);
             }

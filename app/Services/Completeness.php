@@ -68,7 +68,7 @@ class Completeness extends AbstractService
      */
     public function recalcEntities(string $entityName, array $where = [], bool $useQm = false): void
     {
-        $replacement = $this->getContainer()->get('metadata')->get(['scopes', $entityName, 'completeness', 'replacement']);
+        $replacement = $this->getContainer()->get('metadata')->get(['scopes', $entityName, 'completeness', 'replacement'], false);
         if (!empty($replacement)) {
             $entityName = $replacement;
         }
