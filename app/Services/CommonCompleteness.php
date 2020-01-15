@@ -99,25 +99,24 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
     /**
      * @param Container $container
-     * @param string $scope
+     * @param string $entity
      * @param bool $value
      */
-    public static function setHasCompleteness(Container $container, string $scope, bool $value): void
+    public static function setHasCompleteness(Container $container, string $entity, bool $value): void
     {
         // prepare data
-        $data = $container->get('metadata')->get("scopes.{$scope}");
+        $scope = $container->get('metadata')->get("scopes.{$entity}");
         //set hasCompleteness
-        $data['hasCompleteness'] = $value;
-
-        $container->get('metadata')->set("scopes", $scope, $data);
+        $scope['hasCompleteness'] = $value;
+        $container->get('metadata')->set('scopes', $entity, $scope);
 
         // save
         $container->get('metadata')->save();
 
-        $filters = json_decode($container->get('layout')->get($scope, 'filters'), true);
+        $filters = json_decode($container->get('layout')->get($entity, 'filters'), true);
         if ($value && !in_array('complete', $filters, true)) {
             $filters[] = 'complete';
-            $container->get('layout')->set($filters, $scope, 'filters');
+            $container->get('layout')->set($filters, $entity, 'filters');
             $container->get('layout')->save();
         }
     }

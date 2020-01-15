@@ -38,6 +38,6 @@ interface CompletenessInterface
     public function setContainer(Container $container);
     public function saveEntity(): void;
 
-    public static function setHasCompleteness(Container $container, string $scope, bool $value): void;
+    public static function setHasCompleteness(Container $container, string $entity, bool $value): void;
     public static function getCompleteField(): array;
 }
