@@ -68,7 +68,7 @@ class ProductFamilyAttributeEntity extends AbstractListener
      */
     protected function getProductTypes(): array
     {
-        return array_keys($this->getContainer()->get('metadata')->get('pim.productType'));
+        return array_keys($this->getContainer()->get('metadata')->get('pim.productType', []));
     }
 
     /**

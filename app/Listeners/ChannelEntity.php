@@ -26,6 +26,7 @@ namespace Completeness\Listeners;
 use Completeness\Services\CommonCompleteness;
 use Completeness\Services\ProductCompleteness;
 use Pim\Entities\Channel;
+use Treo\Core\Utils\Util;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
 
@@ -47,7 +48,7 @@ class ChannelEntity extends AbstractListener
            $defs['isCustom'] = false;
            $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL;
 
-           $fieldsEntityDefs = $this->getMetadata()->get(['entityDefs', 'fields']);
+           $fieldsEntityDefs = $this->getMetadata()->get(['entityDefs', 'fields'], []);
            //find maximum sorOrder
            foreach ($fieldsEntityDefs as $field => $entityDefs) {
                if (!empty($entityDefs['isChannel']) && $entityDefs['sortOrder'] > $defs['sortOrder']) {
@@ -55,7 +56,7 @@ class ChannelEntity extends AbstractListener
                }
            }
 
-           $fields[$channel->get('name')] = $defs;
+           $fields[ProductCompleteness::getNameChannelField((string)$channel->get('name'))] = $defs;
 
            $this->getMetadata()->set('entityDefs', 'Product', ['fields' => $fields]);
            $this->getMetadata()->save();
@@ -76,6 +77,7 @@ class ChannelEntity extends AbstractListener
 
     /**
      * @param Event $event
+     * @throws \Espo\Core\Exceptions\Error
      */
    protected function removeChannelColumn(Event $event): void
    {
@@ -86,11 +88,12 @@ class ChannelEntity extends AbstractListener
            $this->getMetadata()->save();
 
            $this->getContainer()->get('dataManager')->rebuild();
-
+           $column = ProductCompleteness::getNameChannelField((string)$channel->get('name'));
+           $column = Util::camelCaseToUnderscore($column);
            $this
                ->getEntityManager()
                ->getPDO()
-               ->exec('ALTER TABLE product DROP COLUMN ' . $channel->get('name'));
+               ->exec('ALTER TABLE product DROP COLUMN ' . $column);
        }
    }
 

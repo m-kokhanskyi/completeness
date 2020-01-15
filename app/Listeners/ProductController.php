@@ -48,7 +48,7 @@ class ProductController extends AbstractListener
      */
     protected function removeNotLinkChannels(Event $event): void
     {
-        $fields = $this->getMetadata()->get(['entityDefs', 'Product', 'fields']);
+        $fields = $this->getMetadata()->get(['entityDefs', 'Product', 'fields'], []);
         $result = $event->getArguments('result')['result'];
 
         $channels = $this

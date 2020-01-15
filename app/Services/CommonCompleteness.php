@@ -104,8 +104,6 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
      */
     public static function setHasCompleteness(Container $container, string $entity, bool $value): void
     {
-        // prepare data
-        $scope = $container->get('metadata')->get("scopes.{$entity}");
         //set hasCompleteness
         $scope['hasCompleteness'] = $value;
         $container->get('metadata')->set('scopes', $entity, $scope);

@@ -49,7 +49,7 @@ class V1Dot12Dot2 extends AbstractMigration
 
         $service = $this->getContainer()->get('serviceFactory')->create('Completeness');
         if (method_exists($service, 'runUpdateCompleteness')) {
-            $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
+            $scopes = $this->getContainer()->get('metadata')->get(['scopes'], []);
             if (!empty($scopes['Product']['hasCompleteness'])&& !empty($scopes['Product']['entity'])) {
                 $this->recalcEntities('Product');
             }
@@ -75,7 +75,7 @@ class V1Dot12Dot2 extends AbstractMigration
 
         foreach ($channels as $k => $ch) {
             $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL + (int)$k;
-            $fields[$ch['name']] = $defs;
+            $fields[ProductCompleteness::getNameChannelField($ch['name'])] = $defs;
         }
 
         $this->getContainer()->get('metadata')->set('entityDefs', $entityName, ['fields' => $fields]);
