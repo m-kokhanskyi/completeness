@@ -113,7 +113,7 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
         // save
         $container->get('metadata')->save();
 
-        $filters = json_decode($container->get('layout')->get($entity, 'filters'), true);
+        $filters = json_decode($container->get('layout')->get($entity, 'filters', []), true);
         if ($value && !in_array('complete', $filters, true)) {
             $filters[] = 'complete';
             $container->get('layout')->set($filters, $entity, 'filters');

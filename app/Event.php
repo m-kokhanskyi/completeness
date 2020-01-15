@@ -55,10 +55,15 @@ class Event extends AbstractEvent
                     && class_exists($class) && new $class instanceof ICompleteness) {
                     $service = $class;
                 }
-                //relacle completeness
-                $service::setHasCompleteness($this->getContainer(), $entity, false);
 
+                $service::setHasCompleteness($this->getContainer(), $entity, false);
                 $service::setHasCompleteness($this->getContainer(), $entity, true);
+
+                $this
+                    ->getContainer()
+                    ->get('serviceFactory')
+                    ->create('Completeness')
+                    ->recalcEntities($entity);
             }
         }
     }
