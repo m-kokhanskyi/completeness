@@ -42,15 +42,17 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
 
             this.panelList.push(completenessPanelDefs);
 
-            this.listenToOnce(this.model, 'sync', (model, response) => {
-                const complete = this.getView('complete');
-                if (complete) {
-                    complete.reCreateFields();
+            this.listenTo(this.model, 'sync', (model, response) => {
+                const updateAndReCreate = () => {
+                    model.clear({silent: true});
+                    model.set(response, {silent: true});
+                    this.getView('complete').reCreateFields();
+                };
+                if (this.getView('complete')) {
+                    updateAndReCreate();
                 } else {
                     this.listenToOnce(this, 'after:render', () => {
-                        model.clear({silent: true});
-                        model.set(response, {silent: true});
-                        this.getView('complete').reCreateFields();
+                        updateAndReCreate();
                     });
                 }
             });

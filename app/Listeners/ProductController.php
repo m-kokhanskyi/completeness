@@ -51,21 +51,25 @@ class ProductController extends AbstractListener
         $fields = $this->getMetadata()->get(['entityDefs', 'Product', 'fields'], []);
         $result = $event->getArguments('result')['result'];
 
+        $idFind = $result->type === 'productVariant' ? $result->configurableProductId : $result->id;
+
+
         $channels = $this
                 ->getEntityManager()
                 ->getRepository('Channel')
                 ->select(['code'])
                 ->leftJoin('products')
-                ->where(['products.id' => $result->id])
+                ->where(['products.id' => $idFind])
                 ->find()
                 ->toArray();
 
         $channels = array_column($channels, 'code');
-
-        foreach ($result as $field => $value) {
-            if ($this->isNotExistChannelField($fields, $field, $channels)) {
-                //remove channel completeness field
-                unset($result->{$field});
+        if (!empty($channels)) {
+            foreach ($result as $field => $value) {
+                if ($this->isNotExistChannelField($fields, $field, $channels)) {
+                    //remove channel completeness field
+                    unset($result->{$field});
+                }
             }
         }
 

@@ -25,6 +25,7 @@ namespace Completeness\Listeners;
 
 use Completeness\Services\CommonCompleteness;
 use Completeness\Services\CompletenessInterface as ICompleteness;
+use Pim\Entities\Channel;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
 
@@ -85,7 +86,7 @@ class EntityManagerController extends AbstractListener
             } else {
                 $this
                     ->getService('Completeness')
-                    ->afterDisable($scope);
+                    ->afterDisableCompleteness($scope);
             }
         }
     }

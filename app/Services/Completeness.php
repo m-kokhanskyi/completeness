@@ -44,11 +44,7 @@ class Completeness extends AbstractService
      */
     public function runUpdateCompleteness(IEntity $entity): array
     {
-        /** @var CompletenessInterface $completeness */
-        $servicesName = $this->getNameServiceEntity($entity->getEntityName());
-
-        $completeness= new $servicesName();
-        $completeness->setContainer($this->getContainer());
+        $completeness = $this->getServiceEntity($entity->getEntityName());
 
         $result = $completeness->calculate($entity);
         $completeness->saveEntity($entity);
@@ -133,6 +129,29 @@ class Completeness extends AbstractService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $entityName
+     * @return CompletenessInterface
+     */
+    public function getServiceEntity(string $entityName): CompletenessInterface
+    {
+        /** @var CompletenessInterface $completeness */
+        $servicesName = $this->getNameServiceEntity($entityName);
+
+        $completeness = new $servicesName();
+        $completeness->setContainer($this->getContainer());
+
+        return $completeness;
+    }
+
+    /**
+     * @param string $entityName
+     */
+    public function afterDisableCompleteness(string $entityName): void
+    {
+        $this->getServiceEntity($entityName)->afterDisable($entityName);
     }
 
     /**
