@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\ORM\Entity;
+use Espo\ORM\IEntity;
 use Treo\Services\AbstractService;
 
 /**
@@ -38,21 +38,16 @@ class Completeness extends AbstractService
     /**
      * Update completeness
      *
-     * @param Entity $entity
+     * @param IEntity $entity
      *
      * @return array
      */
-    public function runUpdateCompleteness(Entity $entity): array
+    public function runUpdateCompleteness(IEntity $entity): array
     {
-        /** @var CompletenessInterface $completeness */
-        $servicesName = $this->getNameServiceEntity($entity->getEntityName());
+        $completeness = $this->getServiceEntity($entity->getEntityName());
 
-        $completeness= new $servicesName();
-        $completeness->setContainer($this->getContainer());
-        $completeness->setEntity($entity);
-
-        $result = $completeness->calculate();
-        $completeness->saveEntity();
+        $result = $completeness->calculate($entity);
+        $completeness->saveEntity($entity);
 
         return $result;
     }
@@ -134,6 +129,29 @@ class Completeness extends AbstractService
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $entityName
+     * @return CompletenessInterface
+     */
+    public function getServiceEntity(string $entityName): CompletenessInterface
+    {
+        /** @var CompletenessInterface $completeness */
+        $servicesName = $this->getNameServiceEntity($entityName);
+
+        $completeness = new $servicesName();
+        $completeness->setContainer($this->getContainer());
+
+        return $completeness;
+    }
+
+    /**
+     * @param string $entityName
+     */
+    public function afterDisableCompleteness(string $entityName): void
+    {
+        $this->getServiceEntity($entityName)->afterDisable($entityName);
     }
 
     /**

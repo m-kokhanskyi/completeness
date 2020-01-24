@@ -31,43 +31,32 @@ Espo.define('completeness:views/record/detail-side', 'class-replace!completeness
         },
 
         setupCompletenessPanel() {
-            const view = this.getMetadata().get(['clientDefs', this.model.name, 'completenessPanelView']) || 'views/record/panels/side';
+            const view = this.getMetadata().get(['clientDefs', this.model.name, 'completenessPanelView']) || 'completeness:views/record/panels/complete-side';
 
             const completenessPanelDefs = {
                 name: 'complete',
                 label: 'Completeness',
                 view: view,
-                fieldList: this.getCompleteFields()
+                fieldList: []
             };
 
             this.panelList.push(completenessPanelDefs);
-        },
 
-        getCompleteFields() {
-            const fields = this.getMetadata().get(['entityDefs', this.model.name, 'fields']) || {};
-
-            let completeFields = [];
-
-            $.each(fields, (name, defs) => {
-                if (defs.isCompleteness && !defs.multilangField && this.model.has(name)) {
-                    completeFields.push({name: name});
+            this.listenTo(this.model, 'sync', (model, response) => {
+                const updateAndReCreate = () => {
+                    model.clear({silent: true});
+                    model.set(response, {silent: true});
+                    this.getView('complete').reCreateFields();
+                };
+                if (this.getView('complete')) {
+                    updateAndReCreate();
+                } else {
+                    this.listenToOnce(this, 'after:render', () => {
+                        updateAndReCreate();
+                    });
                 }
             });
-
-            completeFields = completeFields.sort((a, b) => (fields[a.name] || {}).sortOrder - (fields[b.name] || {}).sortOrder);
-
-            //add multi-language complete fields after main complete field
-            if (this.getConfig().get('isMultilangActive')) {
-                const multiCompleteFields = [];
-                (this.getConfig().get('inputLanguageList') || []).forEach(lang => {
-                    const multiComplete = lang.split('_').reduce((prev, curr) => prev + Espo.utils.upperCaseFirst(curr.toLowerCase()), 'complete');
-                    multiCompleteFields.push({name: multiComplete});
-                });
-                const index = completeFields.findIndex(item => item.name === 'complete');
-                completeFields.splice(index + 1, 0, ...multiCompleteFields);
-            }
-
-            return completeFields;
         }
+
     })
 });

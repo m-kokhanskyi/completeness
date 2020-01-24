@@ -62,26 +62,20 @@ class V1Dot12Dot2 extends AbstractMigration
     protected function recalcEntitiesUp(string $entityName): void
     {
         // prepare data
-        $fields = [];
         $channels = $this->getContainer()
             ->get('entityManager')
             ->getRepository('Channel')
-            ->select(['name'])
-            ->find()
-            ->toArray();
+            ->select(['name', 'code'])
+            ->find();
 
         $defs = CommonCompleteness::CONFIG_COMPLETE_FIELDS;
         $defs['isChannel'] = true;
 
         foreach ($channels as $k => $ch) {
             $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL + (int)$k;
-            $fields[ProductCompleteness::getNameChannelField($ch['name'])] = $defs;
+
+            ProductCompleteness::createFieldChannel($this->getContainer(), $ch, $defs, false);
         }
-
-        $this->getContainer()->get('metadata')->set('entityDefs', $entityName, ['fields' => $fields]);
-        $this->getContainer()->get('metadata')->save();
-
-        $this->getContainer()->get('dataManager')->rebuild();
 
         /** @var Completeness $service */
         $service = $this->getContainer()->get('serviceFactory')->create('Completeness');

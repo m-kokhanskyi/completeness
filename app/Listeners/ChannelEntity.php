@@ -26,6 +26,7 @@ namespace Completeness\Listeners;
 use Completeness\Services\CommonCompleteness;
 use Completeness\Services\ProductCompleteness;
 use Pim\Entities\Channel;
+use Treo\Core\Utils\FieldManager;
 use Treo\Core\Utils\Util;
 use Treo\Listeners\AbstractListener;
 use Treo\Core\EventManager\Event;
@@ -49,19 +50,13 @@ class ChannelEntity extends AbstractListener
            $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL;
 
            $fieldsEntityDefs = $this->getMetadata()->get(['entityDefs', 'fields'], []);
-           //find maximum sorOrder
+           //find maximum sortOrder
            foreach ($fieldsEntityDefs as $field => $entityDefs) {
                if (!empty($entityDefs['isChannel']) && $entityDefs['sortOrder'] > $defs['sortOrder']) {
                    $defs['sortOrder'] = $entityDefs['sortOrder'];
                }
            }
-
-           $fields[ProductCompleteness::getNameChannelField((string)$channel->get('name'))] = $defs;
-
-           $this->getMetadata()->set('entityDefs', 'Product', ['fields' => $fields]);
-           $this->getMetadata()->save();
-
-           $this->getContainer()->get('dataManager')->rebuild();
+           ProductCompleteness::createFieldChannel($this->getContainer(), $channel, $defs, false);
        }
    }
 
@@ -71,30 +66,8 @@ class ChannelEntity extends AbstractListener
    public function afterRemove(Event $event): void
    {
       if ($this->hasCompleteness('Product')) {
-          $this->removeChannelColumn($event);
+          ProductCompleteness::dropFieldChannel($this->getContainer(), $event->getArgument('entity'), false);
       }
-   }
-
-    /**
-     * @param Event $event
-     * @throws \Espo\Core\Exceptions\Error
-     */
-   protected function removeChannelColumn(Event $event): void
-   {
-       $channel = $event->getArgument('entity');
-
-       if (!empty($this->getMetadata()->get(['entityDefs', 'Product', 'fields', $channel->get('name')]))) {
-           $this->getMetadata()->delete('entityDefs', 'Product', 'fields.' . $channel->get('name'));
-           $this->getMetadata()->save();
-
-           $this->getContainer()->get('dataManager')->rebuild();
-           $column = ProductCompleteness::getNameChannelField((string)$channel->get('name'));
-           $column = Util::camelCaseToUnderscore($column);
-           $this
-               ->getEntityManager()
-               ->getPDO()
-               ->exec('ALTER TABLE product DROP COLUMN ' . $column);
-       }
    }
 
     /**

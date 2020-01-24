@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\ORM\Entity;
+use Espo\ORM\IEntity;
 use Treo\Core\Container;
 
 /**
@@ -33,10 +33,10 @@ use Treo\Core\Container;
  */
 interface CompletenessInterface
 {
-    public function calculate(): array;
-    public function setEntity(Entity $entity): void;
+    public function calculate(IEntity $entity): array;
     public function setContainer(Container $container);
-    public function saveEntity(): void;
+    public function saveEntity(IEntity $entity): void;
+    public function afterDisable(string $entityName): void;
 
     public static function setHasCompleteness(Container $container, string $entity, bool $value): void;
     public static function getCompleteField(): array;
