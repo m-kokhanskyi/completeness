@@ -82,6 +82,10 @@ class EntityManagerController extends AbstractListener
                         ->getService('Completeness')
                         ->recalcEntities($scope);
                 }
+            } else {
+                $this
+                    ->getService('Completeness')
+                    ->afterDisable($scope);
             }
         }
     }

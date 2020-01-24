@@ -40,7 +40,7 @@ class Entity extends AbstractListener
      */
     public function afterSave(Event $event)
     {
-        /** @var OrmEntity $entity */
+        /** @var EntityOrm $entity */
         $entity = $event->getArgument('entity');
         if ($this->hasCompleteness($entity->getEntityName())) {
             $this->updateCompleteness($entity);
@@ -87,10 +87,7 @@ class Entity extends AbstractListener
     }
 
     /**
-     * @param array $args
-     * @param Entity $entity
-     *
-     * @return array
+     * @param EntityOrm $entity
      */
     protected function updateCompleteness(EntityOrm $entity): void
     {

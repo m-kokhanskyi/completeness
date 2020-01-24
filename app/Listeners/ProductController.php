@@ -54,13 +54,13 @@ class ProductController extends AbstractListener
         $channels = $this
                 ->getEntityManager()
                 ->getRepository('Channel')
-                ->select(['name'])
+                ->select(['code'])
                 ->leftJoin('products')
                 ->where(['products.id' => $result->id])
                 ->find()
                 ->toArray();
 
-        $channels = array_column($channels, 'name');
+        $channels = array_column($channels, 'code');
 
         foreach ($result as $field => $value) {
             if ($this->isNotExistChannelField($fields, $field, $channels)) {

@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace Completeness\Services;
 
-use Espo\ORM\Entity;
+use Espo\ORM\IEntity;
 use Treo\Services\AbstractService;
 
 /**
@@ -38,21 +38,20 @@ class Completeness extends AbstractService
     /**
      * Update completeness
      *
-     * @param Entity $entity
+     * @param IEntity $entity
      *
      * @return array
      */
-    public function runUpdateCompleteness(Entity $entity): array
+    public function runUpdateCompleteness(IEntity $entity): array
     {
         /** @var CompletenessInterface $completeness */
         $servicesName = $this->getNameServiceEntity($entity->getEntityName());
 
         $completeness= new $servicesName();
         $completeness->setContainer($this->getContainer());
-        $completeness->setEntity($entity);
 
-        $result = $completeness->calculate();
-        $completeness->saveEntity();
+        $result = $completeness->calculate($entity);
+        $completeness->saveEntity($entity);
 
         return $result;
     }

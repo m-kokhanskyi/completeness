@@ -25,12 +25,16 @@ namespace Completeness\Services;
 
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Utils\Util;
-use Espo\ORM\Entity;
+use Espo\ORM\IEntity;
 use Espo\ORM\EntityCollection;
 use Treo\Core\Container;
 use Treo\Core\Utils\Condition\Condition;
 use Treo\Services\AbstractService;
 
+/**
+ * Class CommonCompleteness
+ * @package Completeness\Services
+ */
 class CommonCompleteness extends AbstractService implements CompletenessInterface
 {
     public const CONFIG_COMPLETE_FIELDS = [
@@ -55,47 +59,35 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
     protected $entity;
 
     /**
-     * @var array
-     */
-    protected $itemsForTotalComplete = [];
-
-    /**
-     * @var array
-     */
-    protected $items = [];
-
-    /**
+     * @param Entity $entity
      * @return array
      * @throws Error
      */
-    public function calculate(): array
+    public function calculate(IEntity $entity): array
     {
-        $this->prepareRequiredFields();
+        $items = $this->prepareRequiredFields($entity);
 
-        $completeness['complete'] = $this->calculationLocalComplete();
-        $completeness = array_merge($completeness, $this->calculationCompleteMultiLang());
-        $completeness['completeTotal'] = $this->calculationTotalComplete();
+        $completeness['complete'] = $this->calculationLocalComplete($items['localComplete']);
+        $completeness = array_merge($completeness, $this->calculationCompleteMultiLang($items['multiLang']));
+        $completeness['completeTotal'] = $this->calculationTotalComplete($items['completeTotal']);
 
-        $this->setFieldsCompletenessInEntity($completeness);
+        $this->setFieldsCompletenessInEntity($completeness, $entity);
 
         return $completeness;
     }
-
     /**
-     * @param Entity $entity
-     */
-    public function setEntity(Entity $entity): void
-    {
-        $this->entity = $entity;
-    }
-
-    /**
+     * @param IEntity $entity
      * @return void
      */
-    public function saveEntity(): void
+    public function saveEntity(IEntity $entity): void
     {
-        $this->getEntityManager()->saveEntity($this->entity, ['skipAll' => true]);
+        $this->getEntityManager()->saveEntity($entity, ['skipAll' => true]);
     }
+
+    /**
+     * @param string $entityName
+     */
+    public function afterDisable(string $entityName): void {}
 
     /**
      * @param Container $container
@@ -140,70 +132,83 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
     /**
      * Prepare required fields and check on empty
+     * @param IEntity $entity
+     * @return array
      * @throws Error
      */
-    protected function prepareRequiredFields(): void
+    protected function prepareRequiredFields(IEntity $entity): array
     {
         $entityDefs = $this
             ->getContainer()
             ->get('metadata')
-            ->get('entityDefs.' . $this->entity->getEntityType() . '.fields');
+            ->get(['entityDefs', $entity->getEntityType(), 'fields'], []);
+
+        $result = [
+            'fields' => [],
+            'multiLang' => [],
+            'localComplete' => [],
+            'completeTotal' => []
+        ];
 
         foreach ($entityDefs as $name => $data) {
-            if ($this->isRequiredField($name, $data)) {
+            if ($this->isRequiredField($name, $data, $entity)) {
                 if (!empty($data['multilangLocale'])) {
-                    $isEmpty = $this->isEmpty($name);
+                    $isEmpty = $this->isEmpty($name, $entity);
                     $item = ['name' => $name, 'isEmpty' => $isEmpty, 'isMultiLang' => true];
 
-                    $this->items['fields'][] = $item;
-                    $this->items['multiLang'][$data['multilangLocale']][] = $item;
-                    $this->itemsForTotalComplete[] = $isEmpty;
+                    $result['fields'][] = $item;
+                    $result['multiLang'][$data['multilangLocale']][] = $item;
+                    $result[] = $isEmpty;
                 } else {
-                    $isEmpty = $this->isEmpty($name);
+                    $isEmpty = $this->isEmpty($name, $entity);
                     $item = ['name' => $name, 'isEmpty' => $isEmpty];
 
-                    $this->items['fields'][] = $item;
-                    $this->items['localComplete'][] = $item;
-                    $this->itemsForTotalComplete[] = $isEmpty;
+                    $result['fields'][] = $item;
+                    $result['localComplete'][] = $item;
+                    $result['completeTotal'][] = $isEmpty;
                 }
             }
         }
+        return $result;
     }
 
     /**
+     * @param array $fieldsLocalComplete
      * @return float
      */
-    protected function calculationLocalComplete(): float
+    protected function calculationLocalComplete(array $fieldsLocalComplete): float
     {
-        return $this->commonCalculationComplete($this->getItem('localComplete'));
+        return $this->commonCalculationComplete($fieldsLocalComplete);
     }
 
     /**
+     * @param array $fields
      * @return array
      */
-    protected function calculationCompleteMultiLang(): array
+    protected function calculationCompleteMultiLang(array $fields): array
     {
         $completenessLang = [];
         if ($this->getConfig()->get('isMultilangActive')) {
             foreach ($this->getLanguages() as $locale => $language) {
                 $name = 'complete' . $language;
-                $completenessLang[$name] = $this->commonCalculationComplete($this->getItem('multiLang')[$locale]);
+                $completenessLang[$name] = $this->commonCalculationComplete($fields[$locale]);
             }
         }
         return $completenessLang;
     }
 
     /**
+     * @param array $fields
      * @return float
      */
-    protected function calculationTotalComplete(): float
+    protected function calculationTotalComplete(array $fields): float
     {
         $totalComplete = 100;
 
-        if (!empty($this->itemsForTotalComplete)) {
-            $coefficient = 100 / count($this->itemsForTotalComplete);
+        if (!empty($fields)) {
+            $coefficient = 100 / count($fields);
             $totalComplete = 0;
-            foreach ($this->itemsForTotalComplete as $isEmpty) {
+            foreach ($fields as $isEmpty) {
                 if (empty($isEmpty)) {
                     $totalComplete += $coefficient;
                 }
@@ -214,12 +219,13 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
     /**
      * @param mixed $value
+     * @param IEntity $entity
      * @return bool
      */
-    protected function isEmpty($value): bool
+    protected function isEmpty($value, IEntity $entity): bool
     {
         $result = true;
-        if (is_string($value) && !empty($valueCurrent = $this->entity->get($value))) {
+        if (is_string($value) && !empty($valueCurrent = $entity->get($value))) {
             if ($valueCurrent instanceof EntityCollection) {
                 $result = (bool)$valueCurrent->count();
             } else {
@@ -232,11 +238,14 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
     /**
      * @param array $completeness
+     * @param IEntity $entity
      */
-    protected function setFieldsCompletenessInEntity(array $completeness): void
+    protected function setFieldsCompletenessInEntity(array $completeness, IEntity $entity): void
     {
         foreach ($completeness as $field => $complete) {
-            $this->entity->set($field, $complete);
+            if ($entity->has($field)) {
+                $entity->set($field, $complete);
+            }
         }
     }
 
@@ -261,29 +270,22 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
     }
 
     /**
-     * @param string $name
-     * @return array
-     */
-    protected function getItem(string $name): array
-    {
-        return (array)$this->items[$name];
-    }
-
-    /**
      * @param string $field
      * @param array $data
+     * @param IEntity $entity
+     *
      * @return bool
      * @throws Error
      */
-    protected function isRequiredField(string $field, array $data): bool
+    protected function isRequiredField(string $field, array $data, IEntity $entity): bool
     {
         $condition = $this
             ->getContainer()
             ->get('metadata')
-            ->get("clientDefs.{$this->entity->getEntityName()}.dynamicLogic.fields.$field.required.conditionGroup", []);
+            ->get("clientDefs.{$entity->getEntityName()}.dynamicLogic.fields.$field.required.conditionGroup", []);
 
         return !empty($data['required'])
-            || (!empty($condition) && Condition::isCheck(Condition::prepare($this->entity, $condition)));
+            || (!empty($condition) && Condition::isCheck(Condition::prepare($entity, $condition)));
     }
 
     /**
