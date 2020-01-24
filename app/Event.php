@@ -57,7 +57,11 @@ class Event extends AbstractEvent
                 }
 
                 $service::setHasCompleteness($this->getContainer(), $entity, false);
+
                 $service::setHasCompleteness($this->getContainer(), $entity, true);
+
+                // rebuild DB
+                $this->getContainer()->get('dataManager')->rebuild();
 
                 $this
                     ->getContainer()
