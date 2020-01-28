@@ -24,76 +24,99 @@ To activate the completeness mechanism for a certain entity, go to `Administrati
 
 ![Entity Mngr](_assets/entity-mngr.jpg)
 
-In the editing pop-up that opens, select the "Complete" checkbox and click the `Save` button to apply the changes:
+In the editing pop-up that opens, select the `Completeness` checkbox and click the `Save` button to apply the changes:
 
 ![Entity Editing](_assets/entity-editing.jpg)
 
-Please, note that you can activate the completeness mechanism for as many entities as needed in the same way.
+Please, note that in the same way you can activate the completeness mechanism for as many entities as needed.
 
-### Marking Fields and Attributes as Required  
+### Marking Entity Fields as Required
 
 The concept of completeness is applied only to the required fields. To mark the *field* as required, go to `Administration > Entity Manager` and click `Fields` for the desired entity:
 
 ![Entity Mngr fields](_assets/entity-mngr-fields.jpg)
 
-In the new window that opens, all fields of the selected entity are displayed. Select the desired field or create a new one that must be completed and select the `Required` checkbox:
+In the new window that opens, all fields of the selected entity are displayed. Open the desired existing field or create a new one that must be completed and select the `Required` checkbox:
 
 ![Required Field](_assets/required-field.jpg)
 
-You can also define the  product *attributes* as required, both of the `Global` and `Channel` scope. This is performed on the product family detail view page:
+In such a way, you can mark as required as many entity fields as you need. As a result, the given field(s) will be included to the completeness calculation.
+
+### Marking Product Attributes as Required 
+
+For the `Product` entity, completeness is calculated not only on the basis of the required fields, but also on the basis of the required attributes. You can define product *attributes* as required, both of the `Global` and `Channel` scope. This is performed on the [product family](https://treopim.com/help/product-families) detail view page:
 
 ![Required attributes](_assets/required-attributes.jpg)
 
-Linking `Channel` attributes to the products allows you to have *channel completeness* calculated in addition to the overall completeness. However, if there are no required attributes linked to the given channel, the completeness is calculated on the basis of the required `Global` attributes values.
+Linking `Channel` attributes to the product records allows you to have *channel completeness* [calculated](#completeness-calculation-logic) separately for each channel linked to the given product record. However, if there are no required attributes linked to the given channel record, the completeness is calculated only on the basis of its required fields.
 
 Refer to the **TreoPIM user guide** to learn more about the [attributes](https://treopim.com/help/attributes), [channels](https://treopim.com/help/channels), and [product families](https://treopim.com/help/product-families).
 
-### Сompleteness Value Display Configuration
+### Completeness Value Display Configuration
 
-To add the completeness level display for the previously configured entity, go to `Administration > Layout Manager` and click the given entity in the list to unfold the list of layouts available for this entity. Click the layout you wish to configure (e.g. `List`) and enable the `Complete` field by its drag-and-drop from the right column to the left:
+To add the completeness level display for the previously configured entity, go to `Administration > Layout Manager` and click the given entity in the list to unfold the list of layouts available for this entity. Click the layout you wish to configure (e.g. `List`) and enable the `Total completeness` field by its drag-and-drop from the right column to the left:
 
-![Layout Mngr complete](_assets/layout-mngr-complete.jpg)
+![Layout Mngr](_assets/layout-mngr.jpg)
 
-Please, note that overall completeness is calculated for the data fields of the default language. However, if you wish to have your field data in multiple languages with the ability to calculate and display their completeness level, you can install the [**Multi-Languages**](https://treopim.com/store/multi-languages) module to your system and configure it properly, and then [add](#marking-fields-and-attributes-as-required) the `Complete (<Local>)` (e.g. `Сomplete (EnUs)`, `Сomplete (DeDe)`, etc.) fields for the desired entities in the same way, as described above.
+Please, note that total completeness is calculated for the data fields of the default language. However, if you have your field data in [multiple languages](https://treopim.com/store/multi-languages) and wish to calculate and display their completeness level, you can [add](#marking-entity-fields-as-required) the `Completeness > "Locale"` (e.g. `Сompleteness > En_US)`, `Сompleteness > de_DE)`, etc.) fields for the desired entities in the same way, as described above.
 
-Click the `Save` button to complete the operation. The added `Complete` field will be displayed on the configured layout type for the given entity:
+Click the `Save` button to complete the operation. The added `Completeness` field(s) will be displayed on the configured layout type for the given entity:
 
-![Completeness added](_assets/complete-added.jpg)
+![Completeness added](_assets/completeness-added.jpg)
 
 When the entity record with enabled completeness is edited (e.g. required fields are added, removed, etc.), the completeness percentage is recalculated on the fly.
 
-Please, note that you cannot activate the product (i.e. set the `Active` checkbox) if its overall completeness is not 100%:
+#### Search Filters
 
-![Activation error](_assets/activation-error.jpg)
+In the same way, completeness levels can also be added to the search filters list in the Layout Manager: 
+
+![Search filters](_assets/search-filters.jpg)
+
+As a result, the enabled filters are added to the filter drop-down list of the configured entity:
+
+![Filter menu](_assets/filter-menu.jpg)
+
+## Completeness Calculation Principles
+
+Having the "Completeness" module installed and properly configured ensures the entity record data calculation in the following ways:
+
+- **Total completeness** – the completeness level of the required fields, including their locales. For product records, the total completeness calculation also includes the required attributes and their locales;
+
+- **Locale completeness** – the completeness level of the required multilingual fields. For product records, the required multilingual `Global` attributes (of the `Boolean`, `Enum`, `Multi-Enum`, `Text`, `Varchar`, and `Wysiwyg` types with the activated `Multi-Language` checkbox) are also included to this calculation. Refer to the [**Multi-Languages module**](https://treopim.com/store/multi-languages) description for details on the multilingual fields and attributes;
+
+- **Completeness** – the completeness level of the required fields and required product attributes. The required multilingual locale fields are not included here, only the main field values. If the "Multi-Languages" nodule is deactivated or removed from the system, the `Total completeness`and `Completeness` values are identical.
+
+Moreover, two additional completeness types are also calculated for [product](https://treopim.com/help/products) records:
+
+- **Global completeness** – the completeness level of the required fields, including their locales. For product records, the total global calculation also includes the required `Global` attributes and their locales
+  
+- **`Channel` completeness** – the completeness level of the required fields and required `Channel` attributes. If the required `Channel` attribute values are not available, the completeness is calculated on the basis of the required fields only.
 
 ## User Functions 
 
-After the "Completeness" module is installed and configured by the administrator, user can view the completeness levels of entity records that are predefined by the administrator and sort the records in this column accordingly:
+After the "Completeness" module is installed and configured by the administrator, user can view the completeness levels of entity records that are predefined by the [administrator](#administrator-functions) and sort the records in this column accordingly:
 
-![Completeness Sorting](_assets/complete-sorting.jpg)
+![Completeness sorting](_assets/completeness-sorting.jpg)
 
-Also user can influence the completeness statistics by editing the required fields and attributes of the configured entities according to his access rights.
+Also user can filter entity records by their completeness levels in accordance with [search filters](#search-filters), predefined by the administrator:
 
-### Completeness Calculation Logic
+![Completeness filter added](_assets/completeness-filter-added.jpg)
 
-TreoPIM supports three types of entity record data calculation for completeness, in percentage:
+Moreover, user can influence the completeness statistics by editing the required fields and attributes of the configured entities according to his access rights.
 
-- **Overall** – the completeness level of the required fields and required `Global` attributes;
-- **Channel** – the completeness level of the required fields and required `Channel` attributes. If required `Channel` attribute values are not available, the completeness is calculated on the basis of the required `Global` attributes values.
-- **Locale** – the completeness level of the required multi-language fields and required multi-language `Global` attributes (`Array MultiLang`, `Enum MultiLang`, `Multi-Enum MultiLang`, `Text MultiLang`, `Varchar MultiLang`, and `Wysiwyg MultiLang`). Refer to the [**Multi-languages**](https://treopim.com/store/multi-languages) module description for details.
+### Completeness Dashlets
 
-### Completeness Dashlets  
-
-In order to conveniently track the completeness of product information in the system, user can display special dashlets on his custom dashboard:
+In order to conveniently track the completeness of product information in the system, user can display special [dashlets](https://treopim.com/help/dashboards-and-dashlets#dashlets) on his custom dashboard:
 
 ![Completeness Dashlets](_assets/completeness-dashlets.jpg)
 
 The following dashlets are available for display:
-- **Completeness overview** – overall completeness values, including configured locales and channels, in the table view. 
+
+- **Completeness overview** – total completeness values, including configured locales and channels, in the table view. 
 - **Locale completeness** – completeness by locales separately and total, in the graphic form.
 - **Channel completeness** – completeness by channels separately and total, in the graphic form.
 
-To learn more about dashboards and dashlets, refer to the corresponding [article](https://treopim.com/help/user-interface) in the TreoPIP user guide.
+To learn more about dashboards and dashlets, refer to the corresponding [article](https://treopim.com/help/dashboards-and-dashlets) in the TreoPIM user guide.
 
 ***Get the "Completeness" module now to easily control and greatly improve the quality of your product data!***
 
