@@ -87,7 +87,9 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
     /**
      * @param string $entityName
      */
-    public function afterDisable(string $entityName): void {}
+    public function afterDisable(string $entityName): void
+    {
+    }
 
     /**
      * @param Container $container

@@ -38,37 +38,39 @@ use Treo\Core\EventManager\Event;
  */
 class ChannelEntity extends AbstractListener
 {
-   public function afterSave(Event $event): void
-   {
-       /** @var Channel $channel */
-       $channel = $event->getArgument('entity');
-       if ($channel->isNew() && $this->hasCompleteness('Product')) {
+    /**
+     * @param Event $event
+     */
+    public function afterSave(Event $event): void
+    {
+        /** @var Channel $channel */
+        $channel = $event->getArgument('entity');
+        if ($channel->isNew() && $this->hasCompleteness('Product')) {
+            $defs = CommonCompleteness::CONFIG_COMPLETE_FIELDS;
+            $defs['isChannel'] = true;
+            $defs['isCustom'] = false;
+            $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL;
 
-           $defs = CommonCompleteness::CONFIG_COMPLETE_FIELDS;
-           $defs['isChannel'] = true;
-           $defs['isCustom'] = false;
-           $defs['sortOrder'] = ProductCompleteness::START_SORT_ORDER_CHANNEL;
-
-           $fieldsEntityDefs = $this->getMetadata()->get(['entityDefs', 'fields'], []);
-           //find maximum sortOrder
-           foreach ($fieldsEntityDefs as $field => $entityDefs) {
-               if (!empty($entityDefs['isChannel']) && $entityDefs['sortOrder'] > $defs['sortOrder']) {
-                   $defs['sortOrder'] = $entityDefs['sortOrder'];
-               }
-           }
-           ProductCompleteness::createFieldChannel($this->getContainer(), $channel, $defs, false);
-       }
-   }
+            $fieldsEntityDefs = $this->getMetadata()->get(['entityDefs', 'fields'], []);
+            //find maximum sortOrder
+            foreach ($fieldsEntityDefs as $field => $entityDefs) {
+                if (!empty($entityDefs['isChannel']) && $entityDefs['sortOrder'] > $defs['sortOrder']) {
+                    $defs['sortOrder'] = $entityDefs['sortOrder'];
+                }
+            }
+            ProductCompleteness::createFieldChannel($this->getContainer(), $channel, $defs, false);
+        }
+    }
 
     /**
      * @param Event $event
      */
-   public function afterRemove(Event $event): void
-   {
-      if ($this->hasCompleteness('Product')) {
-          ProductCompleteness::dropFieldChannel($this->getContainer(), $event->getArgument('entity'), false);
-      }
-   }
+    public function afterRemove(Event $event): void
+    {
+        if ($this->hasCompleteness('Product')) {
+            ProductCompleteness::dropFieldChannel($this->getContainer(), $event->getArgument('entity'), false);
+        }
+    }
 
     /**
      * @param string $entityName

@@ -122,7 +122,7 @@ class V1Dot12Dot2 extends AbstractMigration
             $defs = $this->getContainer()->get('metadata')->get(['entityDefs']);
             $scopes = $this->getContainer()->get('metadata')->get(['scopes']);
             foreach ($defs as $entity => $row) {
-                if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity']) ) {
+                if (!empty($scopes[$entity]['hasCompleteness']) && !empty($scopes[$entity]['entity'])) {
                     $this->recalcEntitiesDown($entity);
                 }
             }
