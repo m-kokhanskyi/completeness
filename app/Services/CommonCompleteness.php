@@ -158,7 +158,7 @@ class CommonCompleteness extends AbstractService implements CompletenessInterfac
 
                     $result['fields'][] = $item;
                     $result['multiLang'][$data['multilangLocale']][] = $item;
-                    $result['completeTotal'] = $isEmpty;
+                    $result['completeTotal'][] = $isEmpty;
                 } else {
                     $isEmpty = $this->isEmpty($name, $entity);
                     $item = ['name' => $name, 'isEmpty' => $isEmpty];
