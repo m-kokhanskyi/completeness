@@ -39,7 +39,7 @@ class ProductController extends AbstractListener
     public function afterActionRead(Event $event): void
     {
         if ($this->hasCompleteness('Product')) {
-           $this->removeNotLinkChannels($event);
+            $this->removeNotLinkChannels($event);
         }
     }
 
@@ -55,13 +55,13 @@ class ProductController extends AbstractListener
 
 
         $channels = $this
-                ->getEntityManager()
-                ->getRepository('Channel')
-                ->select(['code'])
-                ->leftJoin('products')
-                ->where(['products.id' => $idFind])
-                ->find()
-                ->toArray();
+            ->getEntityManager()
+            ->getRepository('Channel')
+            ->select(['code'])
+            ->leftJoin('products')
+            ->where(['products.id' => $idFind])
+            ->find()
+            ->toArray();
 
         $channels = array_column($channels, 'code');
         if (!empty($channels)) {
@@ -84,7 +84,7 @@ class ProductController extends AbstractListener
      */
     protected function isNotExistChannelField(array $fields, string $field, array $channels): bool
     {
-        return!empty($fields[$field]['isCompleteness'])
+        return !empty($fields[$field]['isCompleteness'])
             && !empty($fields[$field]['isChannel'])
             && !in_array($field, $channels, true);
     }

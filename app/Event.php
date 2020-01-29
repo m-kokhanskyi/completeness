@@ -24,6 +24,8 @@ namespace Completeness;
 
 use Completeness\Services\CommonCompleteness;
 use Completeness\Services\CompletenessInterface as ICompleteness;
+use Completeness\Services\ProductCompleteness;
+use Espo\Core\ORM\Entity;
 use Treo\Core\ModuleManager\AbstractEvent;
 use Treo\Core\Utils\Auth;
 
@@ -77,22 +79,35 @@ class Event extends AbstractEvent
      */
     public function afterDelete(): void
     {
-        (new Auth($this->getContainer()))->useNoAuth();
-
-        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs');
-        foreach ($entityDefs as $entity => &$row) {
-            try {
-                if ($this->hasCompleteness($entity)) {
-                    $this
-                        ->getContainer()
-                        ->get('serviceFactory')
-                        ->create('Completeness')
-                        ->afterDisableCompleteness($entity);
+        try {
+            $metadata = $this->getContainer()->get('metadata');
+            if (!empty($metadata->get(['scopes', 'Product', 'hasCompleteness']))
+                    && !empty($metadata->get(['scopes','Channel']))) {
+                $channels = $this
+                    ->getContainer()
+                    ->get('entityManager')
+                    ->getRepository('Channel')
+                    ->select(['code'])
+                    ->find();
+                foreach ($channels as $channel) {
+                    $this->dropChannelProduct($channel);
                 }
-            } catch (\Exception $e) {
-                $this->setLog($entity, $e);
-                continue;
             }
+        } catch (\Exception $e) {
+            $this->setLog('Product', $e);
+        }
+    }
+
+    /**
+     * @param Entity $channel
+     */
+    protected function dropChannelProduct(Entity $channel): void
+    {
+        $nameField = ProductCompleteness::getNameChannelField($channel);
+        if (!empty($this->getContainer()->get('metadata')->get(['entityDefs', 'Product', 'fields', $nameField]))) {
+            $this->getContainer()->get('fieldManager')->delete('Product', $nameField);
+
+            ProductCompleteness::dropColumnWithTable($this->getContainer()->get('entityManager'), $nameField);
         }
     }
 
