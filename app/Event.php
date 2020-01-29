@@ -41,14 +41,11 @@ class Event extends AbstractEvent
     {
         (new Auth($this->getContainer()))->useNoAuth();
 
-        $entityDefs = $this
-            ->getContainer()
-            ->get('metadata')
-            ->get('entityDefs');
+        $metadata = $this->getContainer()->get('metadata');
+        $entityDefs = $metadata->get('entityDefs');
 
         foreach ($entityDefs as $entity => &$row) {
             if ($this->hasCompleteness($entity)) {
-                $metadata = $this->getContainer()->get('metadata');
                 /** @var ICompleteness $service */
                 $service = CommonCompleteness::class;
                 if (!empty($class = $metadata->get(['scopes', $entity, 'completeness', 'service']))
@@ -75,7 +72,21 @@ class Event extends AbstractEvent
     /**
      * After module delete event
      */
-    public function afterDelete(): void {}
+    public function afterDelete(): void
+    {
+        (new Auth($this->getContainer()))->useNoAuth();
+
+        $entityDefs = $this->getContainer()->get('metadata')->get('entityDefs');
+        foreach ($entityDefs as $entity => &$row) {
+            if ($this->hasCompleteness($entity)) {
+                $this
+                    ->getContainer()
+                    ->get('serviceFactory')
+                    ->create('Completeness')
+                    ->afterDisableCompleteness($entity);
+            }
+        }
+    }
 
     /**
      * @param string $entityName
