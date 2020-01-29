@@ -109,7 +109,7 @@ class Event extends AbstractEvent
                 ->getContainer()
                 ->get('entityManager')
                 ->nativeQuery("SHOW COLUMNS FROM `product` LIKE '{$nameField}'")
-                ->fetch(PDO::FETCH_ASSOC);
+                ->fetch(\PDO::FETCH_ASSOC);
             if (!empty($columns)) {
                 $this
                     ->getContainer()
