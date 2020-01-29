@@ -40,7 +40,12 @@ Espo.define('completeness:views/record/panels/complete-side', 'views/record/pane
             let completeFields = [];
 
             $.each(fields, (name, defs) => {
-                if (defs.isCompleteness && !defs.multilangField && this.model.has(name)) {
+                if (
+                    defs.isCompleteness
+                        && !defs.multilangField
+                        && this.model.get(name) !== null
+                        && typeof this.model.get(name) !== 'undefined'
+                ) {
                     completeFields.push({name: name});
                 }
             });
