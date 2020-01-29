@@ -24,7 +24,6 @@ namespace Completeness;
 
 use Completeness\Services\CommonCompleteness;
 use Completeness\Services\CompletenessInterface as ICompleteness;
-use Completeness\Services\ProductCompleteness;
 use Espo\Core\ORM\Entity;
 use Treo\Core\ModuleManager\AbstractEvent;
 use Treo\Core\Utils\Auth;
@@ -103,7 +102,7 @@ class Event extends AbstractEvent
      */
     protected function dropChannelProduct(Entity $channel): void
     {
-        $nameField = ProductCompleteness::getNameChannelField($channel);
+        $nameField = 'completeness_channel_' . $channel->get('code');;
         if (!empty($this->getContainer()->get('metadata')->get(['entityDefs', 'Product', 'fields', $nameField]))) {
             $this->getContainer()->get('fieldManager')->delete('Product', $nameField);
             $columns = $this
