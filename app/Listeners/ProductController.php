@@ -84,9 +84,12 @@ class ProductController extends AbstractListener
      */
     protected function isNotExistChannelField(array $fields, string $field, array $channels): bool
     {
-        return !empty($fields[$field]['isCompleteness'])
-            && !empty($fields[$field]['isChannel'])
-            && !in_array($field, $channels, true);
+        $result = false;
+        if (!empty($fields[$field]['isCompleteness']) && !empty($fields[$field]['isChannel'])) {
+            $channel = str_replace('completeness_channel_', '', $field);
+            $result = !in_array($channel, $channels, true);
+        }
+        return $result;
     }
 
     /**

@@ -106,8 +106,18 @@ class Event extends AbstractEvent
         $nameField = ProductCompleteness::getNameChannelField($channel);
         if (!empty($this->getContainer()->get('metadata')->get(['entityDefs', 'Product', 'fields', $nameField]))) {
             $this->getContainer()->get('fieldManager')->delete('Product', $nameField);
-
-            ProductCompleteness::dropColumnWithTable($this->getContainer()->get('entityManager'), $nameField);
+            $columns = $this
+                ->getContainer()
+                ->get('entityManager')
+                ->nativeQuery("SHOW COLUMNS FROM `product` LIKE '{$nameField}'")
+                ->fetch(PDO::FETCH_ASSOC);
+            if (!empty($columns)) {
+                $this
+                    ->getContainer()
+                    ->get('entityManager')
+                    ->getPDO()
+                    ->exec('ALTER TABLE product DROP COLUMN ' . $nameField);
+            }
         }
     }
 
