@@ -84,7 +84,7 @@ Having the "Completeness" module installed and properly configured ensures the e
 
 - **Locale completeness** – the completeness level of the required multilingual fields. For product records, the required multilingual `Global` attributes (of the `Boolean`, `Enum`, `Multi-Enum`, `Text`, `Varchar`, and `Wysiwyg` types with the activated `Multi-Language` checkbox) are also included to this calculation. Refer to the [**Multi-Languages module**](https://treopim.com/store/multi-languages) description for details on the multilingual fields and attributes;
 
-- **Completeness** – the completeness level of the required fields and required product attributes. The required multilingual locale fields are not included here, only the main field values. If the "Multi-Languages" nodule is deactivated or removed from the system, the `Total completeness`and `Completeness` values are identical.
+- **Completeness** – the completeness level of the required fields and required product attributes. The required multilingual locale fields are not included here, only the main field values. If the "Multi-Languages" module is deactivated or removed from the system, the `Total completeness`and `Completeness` values are identical.
 
 Moreover, two additional completeness types are also calculated for [product](https://treopim.com/help/products) records:
 
