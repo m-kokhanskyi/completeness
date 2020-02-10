@@ -58,19 +58,15 @@ Weitere Informationen zu den [Attributen](https://treopim.com/de/hilfe/attribute
 
 Um die Anzeige des Ausfüllgrades für die vorher konfigurierte Entität hinzuzufügen, gehen Sie auf `Administration > Layout Manager` und klicken Sie auf die bestimmte Entität in der Liste, um die Liste der Layouts auszuklappen, die für diese Entität verfügbar sind. Klicken Sie auf das Layout, das Sie konfigurieren möchten  (z.B. `Liste`) und aktivieren Sie das Feld `Complete` durch drag-and-drop von der rechten Spalte in die linke:    
 
-![Layout Mngr complete](_assets/layout-mngr-complete.jpg)
+![Layout Mngr](_assets/layout-mngr.jpg)
 
 Bitte beachten Sie, dass die gesamte Vollständigkeit für die Datenfelder der Standardsprache berechnet wird. Wenn Sie jedoch möchten, dass Ihre Felddaten in mehreren Sprachen vorhanden sind und dabei die Möglichkeit benötigt wird, dass der Ausfüllgrad berechnet und angezeigt wird, können Sie das Modul [**Multi-Languages**](https://treopim.com/de/shop/multi-languages) in Ihrem System installieren und korrekt konfigurieren. Anschließend [fügen](#die-felder-und-attributte-als-pflichtfelder-und-pflichtatribute-markieren) Sie die Felder  `Complete (<Local>)` (z.B. `Complete (EnUs)`, `Complete (DeDe)` usw.) für die gewünschten Entitäten auf die oben beschriebene Weise hinzu.
 
 Klicken Sie auf den Button `Speichern`, um den Vorgang abzuschließen. Das hinzugefügte Feld `Complete` wird im konfigurierten Layouttyp für die gegebene Entität angezeigt:
 
-![Completeness added](_assets/complete-added.jpg)
+![Completeness added](_assets/completeness-added.jpg)
 
 Bei der Bearbeitung des Entitätseintrags mit der aktivierten Vollständigkeit (z.B. beim Hinzufügen, Entfernen usw. des Pflichtfeldes) wird der Prozentwert der Vollständigkeit sofort neu berechnet.
-
-Beachten Sie bitte, dass Sie das Produkt nicht aktivieren können (d.h. die Checkbox `Aktiv` setzen), wenn die gesamte Vollständigkeit nicht 100% beträgt: 
-
-![Activation error](_assets/activation-error.jpg)
 
 #### Suchfilter
 
@@ -101,7 +97,7 @@ Bei Produktdatensätzen gibt es zwei zusätzliche Vollständigkeitstypen:
 
 Nachdem das Modul  „Completeness“ vom Administrator installiert und konfiguriert wurde, kann der Nutzer den vom Administrator vordefinierten Ausfüllgrad der Entitätseinträge ansehen und die Einträge in dieser Spalte entsprechend sortieren:
 
-![Completeness Sorting](_assets/complete-sorting.jpg)
+![Completeness Sorting](_assets/completeness-sorting.jpg)
 
 Außerdem kann man die Entitätsdatensätze nach ihrem Vollständigkeitsgrad gemäß den vom Administrator vordefinierten [Suchfiltern](https://treopim.com/store/completeness#search-filters) filtern:
 
