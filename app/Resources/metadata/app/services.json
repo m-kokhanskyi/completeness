@@ -1,0 +1,6 @@
+{
+  "Completeness": "\\Completeness\\Services\\Completeness",
+  "CommonCompleteness": "\\Completeness\\Services\\CommonCompleteness",
+  "CompletenessOverviewDashlet": "\\Completeness\\Services\\CompletenessOverviewDashlet",
+  "QueueManagerMassUpdateComplete": "\\Completeness\\Services\\QueueManagerMassUpdateComplete"
+}
